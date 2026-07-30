@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Suavizado de scroll y clases para el efecto 100vh de cada comercio */
+html {
+  scroll-behavior: smooth;
+}
+
+.scroll-container {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100vh;
+}
+
+.scroll-area {
+  scroll-snap-align: start;
+}

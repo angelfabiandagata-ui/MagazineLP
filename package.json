@@ -1,5 +1,43 @@
 {
+  "name": "magazinelp",
+  "version": "1.0.0",
+  "description": "App",
+  "homepage": "https://github.com/angelfabiandagata-ui/MagazineLP#readme",
+  "bugs": {
+    "url": "https://github.com/angelfabiandagata-ui/MagazineLP/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/angelfabiandagata-ui/MagazineLP.git"
+  },
+  "license": "ISC",
+  "author": "Fabian D'Agata",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "node ./seeders/seed.js",
+    "db:init": "node ./seeders/seed.js"
+  },
   "dependencies": {
-    "express": "^5.2.1"
+    "axios": "^1.18.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.2.0",
+    "pg": "^8.22.0",
+    "pg-hstore": "^2.3.4",
+    "react-router-dom": "^7.18.1",
+    "sequelize": "^6.37.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.23",
+    "tailwindcss": "^4.3.3"
   }
 }
