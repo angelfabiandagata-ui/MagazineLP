@@ -77,7 +77,7 @@ router.put('/:id', uploadFields, async (req, res) => {
     comercio.redSocial = { instagram, whatsapp };
     await comercio.save();
 
-    // 2. Guardar Imágenes en la tabla Image (según ENUM)
+    // 2. Guardar o reemplazar Imágenes
     if (req.files) {
       const guardarOReemplazarImagen = async (fileArray, tipoEnum) => {
         if (fileArray && fileArray[0]) {
@@ -96,26 +96,47 @@ router.put('/:id', uploadFields, async (req, res) => {
       await guardarOReemplazarImagen(req.files.promo2, 'PROMO_2');
     }
 
-    // 3. Guardar Labels utilizando la columna 'label'
-    if (labels) {
-      const labelsArray = typeof labels === 'string' ? JSON.parse(labels) : labels;
+    // 3. Procesar Labels (Robusto para arrays o strings JSON)
+    if (labels !== undefined && labels !== null) {
+      let labelsArray = [];
+
+      try {
+        labelsArray = typeof labels === 'string' ? JSON.parse(labels) : labels;
+      } catch (e) {
+        console.error('Error al parsear labels:', e);
+      }
+
       if (Array.isArray(labelsArray)) {
         const labelInstances = [];
-        for (const textoLabel of labelsArray) {
-          const [labelRecord] = await Label.findOrCreate({
-            where: { label: textoLabel.trim().toLowerCase() }
-          });
-          labelInstances.push(labelRecord);
+        
+        for (const item of labelsArray) {
+          // Extraemos el texto limpio, sirviendo si es objeto o string directa
+          const texto = typeof item === 'object' ? (item.label || item.name) : item;
+          
+          if (texto && typeof texto === 'string' && texto.trim() !== '') {
+            const [labelRecord] = await Label.findOrCreate({
+              where: { label: texto.trim().toLowerCase() }
+            });
+            labelInstances.push(labelRecord);
+          }
         }
+
+        // Asocia e invalida/reemplaza las viejas relaciones de la tabla pivote
         await comercio.setLabels(labelInstances);
       }
     }
 
-    // 4. Retornar comercio actualizado con sus asociaciones
+    // 4. Traer el comercio actualizado con ambas asociaciones
     const comercioActualizado = await Commerce.findByPk(id, {
       include: [
-        { model: Label, through: { attributes: [] } },
-        { model: Image, as: 'images' }
+        { 
+          model: Label, 
+          through: { attributes: [] } 
+        },
+        { 
+          model: Image, 
+          as: 'images' 
+        }
       ]
     });
 

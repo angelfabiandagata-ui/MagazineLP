@@ -2,32 +2,26 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import BloqueComercio from '../components/BloqueComercio';
 
+// Función para mezclar un array de forma aleatoria (Fisher-Yates)
+const mezclarArray = (array) => {
+  const lista = [...array];
+  for (let i = lista.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [lista[i], lista[j]] = [lista[j], lista[i]];
+  }
+  return lista;
+};
+
 export default function Inicio() {
   const [comercios, setComercios] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    // Petición al backend
     axios.get('http://localhost:3000/api/comercios')
       .then(res => {
-        // Mapeamos los comercios para extraer fácilmente las URLs de sus imágenes asociadas
-        const comerciosProcesados = res.data.map(comercio => {
-          const imagenes = comercio.images || [];
-          
-          const fondoObj = imagenes.find(img => img.tipo === 'FONDO');
-          const promo1Obj = imagenes.find(img => img.tipo === 'PROMO_1');
-          const promo2Obj = imagenes.find(img => img.tipo === 'PROMO_2');
-
-          return {
-            ...comercio,
-            // Si tiene imagen en DB le anteponemos el backend, si no, queda null
-            imagenFondo: fondoObj ? `http://localhost:3000${fondoObj.url}` : null,
-            promo1: promo1Obj ? `http://localhost:3000${promo1Obj.url}` : null,
-            promo2: promo2Obj ? `http://localhost:3000${promo2Obj.url}` : null,
-          };
-        });
-
-        setComercios(comerciosProcesados);
+        // 👈 Mezclamos la lista de comercios antes de guardarla en el estado
+        const comerciosAleatorios = mezclarArray(res.data);
+        setComercios(comerciosAleatorios);
         setCargando(false);
       })
       .catch(err => {

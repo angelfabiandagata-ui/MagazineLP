@@ -25,35 +25,70 @@ export default function Perfil() {
     whatsapp: ''
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const datosComercio = localStorage.getItem('comercio');
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  const datosComercio = localStorage.getItem('comercio');
 
-    if (!token || !datosComercio) {
-      navigate('/login');
-      return;
-    }
+  if (!token || !datosComercio) {
+    navigate('/login');
+    return;
+  }
 
-    const data = JSON.parse(datosComercio);
-    setComercio(data);
+  const comLocal = JSON.parse(datosComercio);
 
-    // Cargar labels asociadas usando la propiedad 'label'
-    if (data.Labels && Array.isArray(data.Labels)) {
-      setLabels(data.Labels.map((lbl) => lbl.label || lbl.name));
-    } else if (data.labels && Array.isArray(data.labels)) {
-      setLabels(data.labels.map((lbl) => (typeof lbl === 'object' ? lbl.label : lbl)));
-    }
+  // 1. Cargar estado básico con localStorage
+  setComercio(comLocal);
 
-    setFormData({
-      name: data.name || '',
-      description: data.description || '',
-      direccion: data.direccion || '',
-      tel: data.tel || '',
-      rubro: data.rubro || '',
-      instagram: data.redSocial?.instagram || '',
-      whatsapp: data.redSocial?.whatsapp || ''
+  // 2. Pedir la información completa y fresca a PostgreSQL
+  axios.get(`http://localhost:3000/api/comercios/${comLocal.id}`)
+    .then((res) => {
+      const comDB = res.data;
+      
+      // Actualizamos estado general y localStorage
+      setComercio(comDB);
+      localStorage.setItem('comercio', JSON.stringify(comDB));
+
+      // 3. 👈 ACTUALIZAR FORM DATA PARA QUE SE VEAN EN LOS INPUTS
+      setFormData({
+        name: comDB.name || '',
+        description: comDB.description || '',
+        direccion: comDB.direccion || '',
+        tel: comDB.tel || '',
+        rubro: comDB.rubro || '',
+        instagram: comDB.redSocial?.instagram || '',
+        whatsapp: comDB.redSocial?.whatsapp || ''
+      });
+
+      // 4. Sincronizar Etiquetas
+      const listaLabels = comDB.Labels || comDB.labels || [];
+      const etiquetasLimpia = listaLabels.map((lbl) => 
+        typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
+      ).filter(Boolean);
+
+      setLabels(etiquetasLimpia);
+    })
+    .catch((err) => {
+      console.error('Error al sincronizar comercio con el servidor:', err);
+      
+      // Fallback usando localStorage si falla la red
+      setFormData({
+        name: comLocal.name || '',
+        description: comLocal.description || '',
+        direccion: comLocal.direccion || '',
+        tel: comLocal.tel || '',
+        rubro: comLocal.rubro || '',
+        instagram: comLocal.redSocial?.instagram || '',
+        whatsapp: comLocal.redSocial?.whatsapp || ''
+      });
+
+      const listaLabelsLocal = comLocal.Labels || comLocal.labels || [];
+      const etiquetasLocal = listaLabelsLocal.map((lbl) => 
+        typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
+      ).filter(Boolean);
+      
+      setLabels(etiquetasLocal);
     });
-  }, [navigate]);
+}, [navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
