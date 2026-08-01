@@ -1,24 +1,34 @@
 import React from 'react';
 
 export default function BloqueComercio({ comercio }) {
-  // 1. Extraemos el array de imágenes sin importar si Sequelize lo manda como Images o images
-  const listaImagenes = comercio.images || comercio.Images || [];
+  // 1. Extraemos el array de imágenes
+  const listaImagenes = comercio?.images || comercio?.Images || [];
 
   // 2. Buscamos las URLs para FONDO, PROMO_1 y PROMO_2
   const objFondo = listaImagenes.find(img => img.tipo === 'FONDO');
   const objPromo1 = listaImagenes.find(img => img.tipo === 'PROMO_1');
   const objPromo2 = listaImagenes.find(img => img.tipo === 'PROMO_2');
 
-  // SVG local oscuro por si el comercio no subió imagen de fondo aún (sin depender de internet)
   const fallbackFondo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'><rect width='100%' height='100%' fill='%230f172a'/><text x='50%' y='50%' fill='%23334155' text-anchor='middle' font-family='sans-serif' font-size='48'>Magazine La Punta</text></svg>";
 
-  // Construimos las URLs completas hacia el backend
   const imgFondo = objFondo ? `http://localhost:3000${objFondo.url}` : fallbackFondo;
   const imgPromo1 = objPromo1 ? `http://localhost:3000${objPromo1.url}` : null;
   const imgPromo2 = objPromo2 ? `http://localhost:3000${objPromo2.url}` : null;
 
-  // Extraemos la lista de etiquetas sin importar si es Labels o labels
-  const listaLabels = comercio.Labels || comercio.labels || [];
+  // 3. Extraemos las etiquetas
+  const listaLabels = comercio?.Labels || comercio?.labels || [];
+
+  // 4. Armado limpio de links de redes (procesados como constantes antes del return)
+  const rawIg = comercio?.redSocial?.instagram || '';
+  const cleanIg = rawIg.replace('@', '');
+  const urlInstagram = cleanIg ? `https://instagram.com/${cleanIg}` : null;
+
+  const rawWa = comercio?.redSocial?.whatsapp || comercio?.tel || '';
+  const numWhatsApp = String(rawWa).replace(/[^0-9]/g, '');
+  const urlWhatsApp = numWhatsApp ? `https://wa.me/${numWhatsApp}` : null;
+
+  const rawWeb = comercio?.redSocial?.paginaWeb || '';
+  const urlWeb = rawWeb ? (rawWeb.startsWith('http') ? rawWeb : `https://${rawWeb}`) : null;
 
   return (
     <div 
@@ -27,7 +37,9 @@ export default function BloqueComercio({ comercio }) {
     >
       {/* Encabezado del Comercio */}
       <div className="pt-16">
-        <h2 className="text-4xl md:text-6xl font-extrabold tracking-wide uppercase">{comercio.name}</h2>
+        <h2 className="text-4xl md:text-6xl font-extrabold tracking-wide uppercase">
+          {comercio?.name}
+        </h2>
         <div className="flex flex-wrap gap-2 mt-2">
           {listaLabels.map((l, index) => (
             <span key={index} className="bg-blue-600/80 text-xs px-3 py-1 rounded-full text-white">
@@ -43,7 +55,7 @@ export default function BloqueComercio({ comercio }) {
         <div className="md:col-span-2 bg-black/40 backdrop-blur-md p-6 rounded-xl border border-white/10">
           <h3 className="text-xl font-bold mb-2">Sobre Nosotros</h3>
           <p className="text-gray-200 text-sm md:text-base leading-relaxed">
-            {comercio.description || 'Sin descripción disponible por el momento.'}
+            {comercio?.description || 'Sin descripción disponible por el momento.'}
           </p>
         </div>
 
@@ -62,16 +74,17 @@ export default function BloqueComercio({ comercio }) {
         </div>
       </div>
 
-      {/* Pie del Bloque: Contacto y Ubicación */}
+      {/* Pie del Bloque: Contacto, Ubicación y Redes */}
       <div className="bg-black/60 backdrop-blur-md p-4 rounded-xl border border-white/10 flex flex-wrap justify-between items-center text-sm">
         <div>
-          <p>📍 {comercio.direccion || 'La Punta, San Luis'}</p>
-          <p>📞 {comercio.tel || 'Sin teléfono de contacto'}</p>
+          <p>📍 {comercio?.direccion || 'La Punta, San Luis'}</p>
+          <p>📞 {comercio?.tel || 'Sin teléfono de contacto'}</p>
         </div>
-        <div className="flex gap-4 mt-2 md:mt-0">
-          {comercio.redSocial?.instagram && (
+
+        <div className="flex flex-wrap gap-4 mt-2 md:mt-0 items-center">
+          {urlInstagram && (
             <a 
-              href={`https://instagram.com/${comercio.redSocial.instagram.replace('@', '')}`} 
+              href={urlInstagram} 
               target="_blank" 
               rel="noreferrer" 
               className="text-pink-400 font-semibold hover:underline"
@@ -79,14 +92,27 @@ export default function BloqueComercio({ comercio }) {
               Instagram
             </a>
           )}
-          {(comercio.redSocial?.whatsapp || comercio.tel) && (
+
+          {urlWhatsApp && (
             <a 
-              href={`https://wa.me/${(comercio.redSocial?.whatsapp || comercio.tel).replace(/[^0-9]/g, '')}`} 
+              href={urlWhatsApp} 
               target="_blank" 
               rel="noreferrer" 
               className="text-green-400 font-semibold hover:underline"
             >
               WhatsApp
+            </a>
+          )}
+
+          {/* 🌐 NUEVO: Sitio Web */}
+          {urlWeb && (
+            <a 
+              href={urlWeb} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="text-amber-400 font-semibold hover:underline flex items-center gap-1"
+            >
+              🌐 Sitio Web
             </a>
           )}
         </div>

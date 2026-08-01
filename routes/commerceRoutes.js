@@ -3,6 +3,8 @@ import Commerce from '../models/Commerce.js';
 import Label from '../models/Label.js';
 import Image from '../models/Image.js';
 import upload from '../middleware/upload.js';
+import { borrarArchivoFisico } from '../utils/deleteFile.js';
+
 
 const router = express.Router();
 
@@ -61,7 +63,7 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', uploadFields, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, direccion, tel, rubro, labels, instagram, whatsapp } = req.body;
+    const { name, description, direccion, tel, rubro, labels, instagram, whatsapp, paginaWeb } = req.body;
 
     const comercio = await Commerce.findByPk(id);
     if (!comercio) {
@@ -74,26 +76,43 @@ router.put('/:id', uploadFields, async (req, res) => {
     comercio.direccion = direccion;
     comercio.tel = tel;
     comercio.rubro = rubro;
-    comercio.redSocial = { instagram, whatsapp };
+    comercio.redSocial = { instagram, whatsapp, paginaWeb };
     await comercio.save();
 
-    // 2. Guardar o reemplazar Imágenes
-    if (req.files) {
-      const guardarOReemplazarImagen = async (fileArray, tipoEnum) => {
-        if (fileArray && fileArray[0]) {
-          const urlPath = `/uploads/${fileArray[0].filename}`;
-          const [imgRecord] = await Image.findOrCreate({
-            where: { commerceId: comercio.id, tipo: tipoEnum },
-            defaults: { url: urlPath, tipo: tipoEnum, commerceId: comercio.id }
-          });
-          imgRecord.url = urlPath;
-          await imgRecord.save();
-        }
-      };
+    // 2. Función UNIFICADA para guardar y borrar la imagen anterior
+    const procesarImagenPorPuesto = async (fileArray, tipoPuesto) => {
+      // Si no subió foto para este puesto, no hacemos nada
+      if (!fileArray || !fileArray[0]) return;
 
-      await guardarOReemplazarImagen(req.files.imagenFondo, 'FONDO');
-      await guardarOReemplazarImagen(req.files.promo1, 'PROMO_1');
-      await guardarOReemplazarImagen(req.files.promo2, 'PROMO_2');
+      const nuevaUrl = `/uploads/${fileArray[0].filename}`;
+
+      // A. Buscamos si ya existe una foto guardada en PostgreSQL para este puesto
+      const imagenVieja = await Image.findOne({
+        where: { commerceId: comercio.id, tipo: tipoPuesto }
+      });
+
+      if (imagenVieja) {
+        // B. Borramos el archivo físico viejo del disco
+        borrarArchivoFisico(imagenVieja.url);
+
+        // C. Actualizamos la referencia en la base de datos con la nueva URL
+        imagenVieja.url = nuevaUrl;
+        await imagenVieja.save();
+      } else {
+        // D. Si no existía foto previa, creamos un registro nuevo
+        await Image.create({
+          url: nuevaUrl,
+          tipo: tipoPuesto,
+          commerceId: comercio.id
+        });
+      }
+    };
+
+    // Procesar cada puesto de imagen si vienen archivos
+    if (req.files) {
+      await procesarImagenPorPuesto(req.files.imagenFondo, 'FONDO');
+      await procesarImagenPorPuesto(req.files.promo1, 'PROMO_1');
+      await procesarImagenPorPuesto(req.files.promo2, 'PROMO_2');
     }
 
     // 3. Procesar Labels (Robusto para arrays o strings JSON)
@@ -110,7 +129,6 @@ router.put('/:id', uploadFields, async (req, res) => {
         const labelInstances = [];
         
         for (const item of labelsArray) {
-          // Extraemos el texto limpio, sirviendo si es objeto o string directa
           const texto = typeof item === 'object' ? (item.label || item.name) : item;
           
           if (texto && typeof texto === 'string' && texto.trim() !== '') {
@@ -121,12 +139,11 @@ router.put('/:id', uploadFields, async (req, res) => {
           }
         }
 
-        // Asocia e invalida/reemplaza las viejas relaciones de la tabla pivote
         await comercio.setLabels(labelInstances);
       }
     }
 
-    // 4. Traer el comercio actualizado con ambas asociaciones
+    // 4. Traer el comercio actualizado con sus asociaciones
     const comercioActualizado = await Commerce.findByPk(id, {
       include: [
         { 

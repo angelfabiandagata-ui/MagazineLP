@@ -22,7 +22,8 @@ export default function Perfil() {
     tel: '',
     rubro: '',
     instagram: '',
-    whatsapp: ''
+    whatsapp: '',
+    paginaWeb: ''
   });
 
 useEffect(() => {
@@ -56,7 +57,8 @@ useEffect(() => {
         tel: comDB.tel || '',
         rubro: comDB.rubro || '',
         instagram: comDB.redSocial?.instagram || '',
-        whatsapp: comDB.redSocial?.whatsapp || ''
+        whatsapp: comDB.redSocial?.whatsapp || '',
+        paginaWeb: comDB.redSocial?.paginaWeb || ''
       });
 
       // 4. Sincronizar Etiquetas
@@ -78,7 +80,8 @@ useEffect(() => {
         tel: comLocal.tel || '',
         rubro: comLocal.rubro || '',
         instagram: comLocal.redSocial?.instagram || '',
-        whatsapp: comLocal.redSocial?.whatsapp || ''
+        whatsapp: comLocal.redSocial?.whatsapp || '',
+        paginaWeb: comDB.redSocial?.paginaWeb || ''
       });
 
       const listaLabelsLocal = comLocal.Labels || comLocal.labels || [];
@@ -134,6 +137,7 @@ useEffect(() => {
       data.append('instagram', formData.instagram);
       data.append('whatsapp', formData.whatsapp);
       data.append('labels', JSON.stringify(labels));
+      data.append('paginaWeb', formData.paginaWeb);
 
       if (archivoFondo) data.append('imagenFondo', archivoFondo);
       if (archivoPromo1) data.append('promo1', archivoPromo1);
@@ -413,6 +417,19 @@ useEffect(() => {
                     className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Página Web / Catálogo</label>
+                  <input
+                    type="text"
+                    name="paginaWeb"
+                    value={formData.paginaWeb}
+                    onChange={handleChange}
+                    placeholder="Ej: www.micomercio.com"
+                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
               </div>
             </div>
 
