@@ -14,7 +14,7 @@ const uploadFields = upload.fields([
   { name: 'promo2', maxCount: 1 }
 ]);
 
-// GET /api/comercios -> Devuelve todos los comercios
+// GET /api/comercios -> Devuelve siempre un Array [...]
 router.get('/', async (req, res) => {
   try {
     const comercios = await Commerce.findAll({
@@ -27,17 +27,19 @@ router.get('/', async (req, res) => {
           model: Image, 
           as: 'images' 
         }
-      ]
+      ],
+      order: [['createdAt', 'DESC']]
     });
 
-    return res.status(200).json(comercios);
+    // Forzar que siempre retorne un Array estructurado
+    return res.status(200).json(Array.isArray(comercios) ? comercios : []);
   } catch (error) {
     console.error('Error al obtener comercios:', error);
-    return res.status(500).json({ mensaje: 'Error al cargar la lista de comercios.' });
+    return res.status(500).json([]); // Retorna array vacío en error para no romper el .filter() del frontend
   }
 });
 
-// GET /api/comercios/:id -> Obtener un comercio específico por ID
+// GET /api/comercios/:id -> Obtener un comercio específico
 router.get('/:id', async (req, res) => {
   try {
     const comercio = await Commerce.findByPk(req.params.id, {
@@ -59,7 +61,16 @@ router.get('/:id', async (req, res) => {
 });
 
 // PUT /api/comercios/:id -> Actualizar perfil e imágenes
-router.put('/:id', uploadFields, async (req, res) => {
+router.put('/:id', (req, res, next) => {
+  // Manejo de errores de multer antes de entrar a la lógica
+  uploadFields(req, res, (err) => {
+    if (err) {
+      console.error('Error al procesar imágenes subidas:', err);
+      return res.status(400).json({ mensaje: 'Error en la subida de archivos.' });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, direccion, tel, rubro, labels, instagram, whatsapp, paginaWeb } = req.body;
@@ -71,10 +82,10 @@ router.put('/:id', uploadFields, async (req, res) => {
 
     // 1. Actualizar datos de texto
     comercio.name = name || comercio.name;
-    comercio.description = description;
-    comercio.direccion = direccion;
-    comercio.tel = tel;
-    comercio.rubro = rubro;
+    comercio.description = description !== undefined ? description : comercio.description;
+    comercio.direccion = direccion !== undefined ? direccion : comercio.direccion;
+    comercio.tel = tel !== undefined ? tel : comercio.tel;
+    comercio.rubro = rubro !== undefined ? rubro : comercio.rubro;
     comercio.redSocial = { instagram, whatsapp, paginaWeb };
     await comercio.save();
 
@@ -138,10 +149,7 @@ router.put('/:id', uploadFields, async (req, res) => {
       ]
     });
 
-    return res.status(200).json({
-      mensaje: 'Perfil e imágenes actualizados con éxito',
-      comercio: comercioActualizado
-    });
+    return res.status(200).json(comercioActualizado);
 
   } catch (error) {
     console.error('Error al actualizar comercio:', error);
@@ -149,7 +157,7 @@ router.put('/:id', uploadFields, async (req, res) => {
   }
 });
 
-// DELETE /api/comercios/:id -> Eliminar un comercio y sus imágenes asociadas
+// DELETE /api/comercios/:id -> Eliminar un comercio
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -171,6 +179,7 @@ router.delete('/:id', async (req, res) => {
     await comercio.destroy();
 
     return res.status(200).json({ 
+      id: Number(id),
       mensaje: `Comercio "${comercio.name}" eliminado correctamente.` 
     });
 

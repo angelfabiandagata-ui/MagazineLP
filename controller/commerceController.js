@@ -1,30 +1,33 @@
 import { Commerce, Image, Label, User } from '../models/index.js';
 
-// 1. Obtener todos los comercios con sus imágenes y etiquetas (para la vista principal 100vh)
+// 1. Obtener todos los comercios (blindado para que SIEMPRE devuelva un Array)
 export const getAllCommerces = async (req, res) => {
   try {
     const comercios = await Commerce.findAll({
       include: [
-        { model: Image },
-        { model: Label }
-      ]
+        { model: Image }, // Si usas alias en models/index.js usa: { model: Image, as: 'images' }
+        { model: Label, through: { attributes: [] } }
+      ],
+      order: [['createdAt', 'DESC']]
     });
-    res.status(200).json(comercios);
+
+    return res.status(200).json(Array.isArray(comercios) ? comercios : []);
   } catch (error) {
     console.error('Error al obtener comercios:', error);
-    res.status(500).json({ error: 'Error al obtener la lista de comercios' });
+    // ⚠️ Retornamos array vacío en lugar de objeto para no romper .filter() o .map() en el Frontend
+    return res.status(500).json([]);
   }
 };
 
-// 2. Obtener un comercio por su ID
+// 2. Obtener un comercio por ID
 export const getCommerceById = async (req, res) => {
   try {
     const { id } = req.params;
     const comercio = await Commerce.findByPk(id, {
       include: [
         { model: Image },
-        { model: Label },
-        { model: User, attributes: ['username', 'email'] } // Evitamos traer la contraseña
+        { model: Label, through: { attributes: [] } },
+        { model: User, attributes: ['username', 'email'] }
       ]
     });
 
@@ -32,14 +35,14 @@ export const getCommerceById = async (req, res) => {
       return res.status(404).json({ error: 'Comercio no encontrado' });
     }
 
-    res.status(200).json(comercio);
+    return res.status(200).json(comercio);
   } catch (error) {
     console.error('Error al obtener el comercio:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
-// 3. Actualizar los datos del comercio (Perfil)
+// 3. Actualizar los datos del comercio
 export const updateCommerce = async (req, res) => {
   try {
     const { id } = req.params;
@@ -51,7 +54,6 @@ export const updateCommerce = async (req, res) => {
       return res.status(404).json({ error: 'Comercio no encontrado' });
     }
 
-    // Actualizamos los campos
     await comercio.update({
       name,
       description,
@@ -62,14 +64,19 @@ export const updateCommerce = async (req, res) => {
       redSocial
     });
 
-    res.status(200).json({ mensaje: 'Comercio actualizado con éxito', comercio });
+    // Devolvemos el comercio actualizado con sus asociaciones incluidas
+    const comercioActualizado = await Commerce.findByPk(id, {
+      include: [{ model: Image }, { model: Label }]
+    });
+
+    return res.status(200).json(comercioActualizado);
   } catch (error) {
     console.error('Error al actualizar el comercio:', error);
-    res.status(500).json({ error: 'Error al actualizar la información' });
+    return res.status(500).json({ error: 'Error al actualizar la información' });
   }
 };
 
-// 4. Eliminar / Dar de baja un comercio
+// 4. Eliminar un comercio
 export const deleteCommerce = async (req, res) => {
   try {
     const { id } = req.params;
@@ -80,9 +87,9 @@ export const deleteCommerce = async (req, res) => {
     }
 
     await comercio.destroy();
-    res.status(200).json({ mensaje: 'Comercio eliminado correctamente' });
+    return res.status(200).json({ id: Number(id), mensaje: 'Comercio eliminado correctamente' });
   } catch (error) {
     console.error('Error al eliminar el comercio:', error);
-    res.status(500).json({ error: 'Error al intentar eliminar el comercio' });
+    return res.status(500).json({ error: 'Error al intentar eliminar el comercio' });
   }
 };
