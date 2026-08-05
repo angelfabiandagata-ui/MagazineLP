@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+// Forzamos la URL directa del servidor de Express
 const API = axios.create({
-  baseURL: '/api'
+  baseURL: 'https://magazinelp.onrender.com/api'
 });
 
-export default API; // 👈 Esta línea es la que faltaba o estaba escrita diferente
+export default API;
