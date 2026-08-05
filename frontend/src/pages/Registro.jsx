@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import API from '../api';
 
 export default function Registro() {
@@ -22,12 +21,13 @@ export default function Registro() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (cargando) return; // Evita ejecuciones dobles si se presiona varias veces
+    
     setMensaje({ tipo: '', texto: '' });
     setCargando(true);
 
     try {
-      // Petición al backend de Node para crear el usuario/comercio
-    const res = await API.post('/auth/register', formData);
+      await API.post('/auth/register', formData);
 
       setMensaje({
         tipo: 'exito',
@@ -42,8 +42,7 @@ export default function Registro() {
         tipo: 'error',
         texto: err.response?.data?.mensaje || 'Error al registrar el comercio. Verificá los datos.'
       });
-    } finally {
-      setCargando(false);
+      setCargando(false); // Solo rehabilitamos si hubo error
     }
   };
 
@@ -148,7 +147,7 @@ export default function Registro() {
           <button
             type="submit"
             disabled={cargando}
-            className="mt-4 w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-bold text-black uppercase tracking-wider rounded-xl transition-all shadow-lg disabled:opacity-50"
+            className="mt-4 w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-bold text-black uppercase tracking-wider rounded-xl transition-all shadow-lg disabled:opacity-50 cursor-pointer"
           >
             {cargando ? 'Registrando...' : 'Dar de Alta Comercio'}
           </button>
