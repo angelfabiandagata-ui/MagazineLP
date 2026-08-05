@@ -1,10 +1,19 @@
 @import "tailwindcss";
 
-/* Suavizado de scroll y clases para el efecto 100vh de cada comercio */
+/* Ajustes globales */
 html {
   scroll-behavior: smooth;
 }
 
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Evita desbordes horizontales en celulares */
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+/* Scroll snap para el efecto revista pantalla por pantalla */
 .scroll-container {
   scroll-snap-type: y mandatory;
   overflow-y: scroll;

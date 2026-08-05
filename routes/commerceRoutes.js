@@ -5,7 +5,6 @@ import Image from '../models/Image.js';
 import upload from '../middleware/upload.js';
 import { borrarArchivoFisico } from '../utils/deleteFile.js';
 
-
 const router = express.Router();
 
 // Configuración de los campos para subir archivos
@@ -15,7 +14,7 @@ const uploadFields = upload.fields([
   { name: 'promo2', maxCount: 1 }
 ]);
 
-// GET /api/comercios -> Devuelve todos los comercios para la vista de Inicio
+// GET /api/comercios -> Devuelve todos los comercios
 router.get('/', async (req, res) => {
   try {
     const comercios = await Commerce.findAll({
@@ -59,7 +58,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/comercios/:id -> Actualizar perfil, imágenes y etiquetas
+// PUT /api/comercios/:id -> Actualizar perfil e imágenes
 router.put('/:id', uploadFields, async (req, res) => {
   try {
     const { id } = req.params;
@@ -79,27 +78,21 @@ router.put('/:id', uploadFields, async (req, res) => {
     comercio.redSocial = { instagram, whatsapp, paginaWeb };
     await comercio.save();
 
-    // 2. Función UNIFICADA para guardar y borrar la imagen anterior
+    // 2. Procesar imágenes por puesto borrando la anterior
     const procesarImagenPorPuesto = async (fileArray, tipoPuesto) => {
-      // Si no subió foto para este puesto, no hacemos nada
       if (!fileArray || !fileArray[0]) return;
 
       const nuevaUrl = `/uploads/${fileArray[0].filename}`;
 
-      // A. Buscamos si ya existe una foto guardada en PostgreSQL para este puesto
       const imagenVieja = await Image.findOne({
         where: { commerceId: comercio.id, tipo: tipoPuesto }
       });
 
       if (imagenVieja) {
-        // B. Borramos el archivo físico viejo del disco
         borrarArchivoFisico(imagenVieja.url);
-
-        // C. Actualizamos la referencia en la base de datos con la nueva URL
         imagenVieja.url = nuevaUrl;
         await imagenVieja.save();
       } else {
-        // D. Si no existía foto previa, creamos un registro nuevo
         await Image.create({
           url: nuevaUrl,
           tipo: tipoPuesto,
@@ -108,17 +101,15 @@ router.put('/:id', uploadFields, async (req, res) => {
       }
     };
 
-    // Procesar cada puesto de imagen si vienen archivos
     if (req.files) {
       await procesarImagenPorPuesto(req.files.imagenFondo, 'FONDO');
       await procesarImagenPorPuesto(req.files.promo1, 'PROMO_1');
       await procesarImagenPorPuesto(req.files.promo2, 'PROMO_2');
     }
 
-    // 3. Procesar Labels (Robusto para arrays o strings JSON)
+    // 3. Procesar Labels
     if (labels !== undefined && labels !== null) {
       let labelsArray = [];
-
       try {
         labelsArray = typeof labels === 'string' ? JSON.parse(labels) : labels;
       } catch (e) {
@@ -127,10 +118,8 @@ router.put('/:id', uploadFields, async (req, res) => {
 
       if (Array.isArray(labelsArray)) {
         const labelInstances = [];
-        
         for (const item of labelsArray) {
           const texto = typeof item === 'object' ? (item.label || item.name) : item;
-          
           if (texto && typeof texto === 'string' && texto.trim() !== '') {
             const [labelRecord] = await Label.findOrCreate({
               where: { label: texto.trim().toLowerCase() }
@@ -138,22 +127,14 @@ router.put('/:id', uploadFields, async (req, res) => {
             labelInstances.push(labelRecord);
           }
         }
-
         await comercio.setLabels(labelInstances);
       }
     }
 
-    // 4. Traer el comercio actualizado con sus asociaciones
     const comercioActualizado = await Commerce.findByPk(id, {
       include: [
-        { 
-          model: Label, 
-          through: { attributes: [] } 
-        },
-        { 
-          model: Image, 
-          as: 'images' 
-        }
+        { model: Label, through: { attributes: [] } },
+        { model: Image, as: 'images' }
       ]
     });
 
@@ -165,6 +146,37 @@ router.put('/:id', uploadFields, async (req, res) => {
   } catch (error) {
     console.error('Error al actualizar comercio:', error);
     return res.status(500).json({ mensaje: 'Error al procesar los datos.' });
+  }
+});
+
+// DELETE /api/comercios/:id -> Eliminar un comercio y sus imágenes asociadas
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const comercio = await Commerce.findByPk(id, {
+      include: [{ model: Image, as: 'images' }]
+    });
+
+    if (!comercio) {
+      return res.status(404).json({ mensaje: 'El comercio no existe.' });
+    }
+
+    if (comercio.images && comercio.images.length > 0) {
+      for (const img of comercio.images) {
+        borrarArchivoFisico(img.url);
+      }
+    }
+
+    await comercio.destroy();
+
+    return res.status(200).json({ 
+      mensaje: `Comercio "${comercio.name}" eliminado correctamente.` 
+    });
+
+  } catch (error) {
+    console.error('Error al eliminar comercio:', error);
+    return res.status(500).json({ mensaje: 'Error al intentar eliminar el comercio.' });
   }
 });
 

@@ -6,6 +6,10 @@ import sequelize from './config/db.js';
 import commerceRoutes from './routes/commerceRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import './models/index.js';
+import newsRoutes from './routes/newsRoutes.js';
+import turismoRoutes from './routes/turismoRoutes.js';
+import Tourism from './models/Tourism.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +26,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Rutas
 app.use('/api/comercios', commerceRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/noticias', newsRoutes);
+app.use('/api/turismo', turismoRoutes);
 
 try {
   await sequelize.sync({ alter: true });
