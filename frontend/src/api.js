@@ -1,10 +1,8 @@
 import axios from 'axios';
 
-// Toma la URL de Render si existe, de lo contrario apunta a tu local
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-const api = axios.create({
-  baseURL: API_URL,
+// Asegura que la URL base tome la variable de Render o fallback al localhost
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'https://magazinelp.onrender.com/api'
 });
 
-export default api;
+export default API;
