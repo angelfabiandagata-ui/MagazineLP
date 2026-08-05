@@ -48,8 +48,8 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Fallback para React Router
-app.get('*', (req, res) => {
+// ✅ Sintaxis compatible para capturar todas las rutas
+app.get('/{0,}', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
