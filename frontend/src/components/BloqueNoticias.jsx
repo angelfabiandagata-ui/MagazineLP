@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../api';
 
 export default function BloqueNoticias() {
   const [noticias, setNoticias] = useState([]);
@@ -33,7 +33,7 @@ export default function BloqueNoticias() {
   ];
 
   useEffect(() => {
-    axios.get('http://localhost:3000/api/noticias')
+    API.get('/noticias')
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
           setNoticias(res.data);

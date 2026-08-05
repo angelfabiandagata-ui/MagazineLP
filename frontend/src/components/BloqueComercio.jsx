@@ -9,9 +9,12 @@ export default function BloqueComercio({ comercio }) {
 
   const fallbackFondo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'><rect width='100%' height='100%' fill='%230f172a'/><text x='50%' y='50%' fill='%23334155' text-anchor='middle' font-family='sans-serif' font-size='48'>Magazine La Punta</text></svg>";
 
-  const imgFondo = objFondo ? `http://localhost:3000${objFondo.url}` : fallbackFondo;
-  const imgPromo1 = objPromo1 ? `http://localhost:3000${objPromo1.url}` : null;
-  const imgPromo2 = objPromo2 ? `http://localhost:3000${objPromo2.url}` : null;
+  // Construcción dinámica del dominio base del backend
+  const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
+
+  const imgFondo = objFondo ? `${BASE_URL}${objFondo.url}` : fallbackFondo;
+  const imgPromo1 = objPromo1 ? `${BASE_URL}${objPromo1.url}` : null;
+  const imgPromo2 = objPromo2 ? `${BASE_URL}${objPromo2.url}` : null;
 
   const listaLabels = comercio?.Labels || comercio?.labels || [];
 
@@ -55,7 +58,7 @@ export default function BloqueComercio({ comercio }) {
           </p>
         </div>
 
-        {/* Galería de Promociones (Grilla de 2 columnas en mobile, vertical en desktop) */}
+        {/* Galería de Promociones */}
         <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
           {imgPromo1 && (
             <div className="h-24 sm:h-28 bg-white/10 rounded-lg overflow-hidden border border-white/20">
