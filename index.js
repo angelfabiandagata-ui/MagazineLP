@@ -37,6 +37,17 @@ app.use('/api/turismo', turismoRoutes);
 // Servir los archivos estáticos de la app compilada desde /frontend/dist
 app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
+// Ruta de prueba para verificar conexión real a PostgreSQL
+app.get('/api/test-db', async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    const [results] = await sequelize.query('SELECT NOW()');
+    res.json({ ok: true, mensaje: '¡Conexión exitosa a PostgreSQL!', horaBD: results[0] });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 // Fallback para React Router
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
