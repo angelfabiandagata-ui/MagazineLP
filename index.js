@@ -13,7 +13,6 @@ import Tourism from './models/Tourism.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const cors = require('cors');
 
 const app = express();
 
