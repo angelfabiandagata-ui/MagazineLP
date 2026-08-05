@@ -9,12 +9,18 @@ import './models/index.js';
 import newsRoutes from './routes/newsRoutes.js';
 import turismoRoutes from './routes/turismoRoutes.js';
 import Tourism from './models/Tourism.js';
+import fs from 'fs';
 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+const uploadsPath = path.resolve(__dirname, 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
 
 // Middlewares
 // Permite peticiones de cualquier origen para evitar bloqueos en Render
@@ -27,6 +33,7 @@ app.use(express.json());
 
 // 👈 Servir imágenes almacenadas en la carpeta /uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsPath));
 
 // Rutas
 app.use('/api/comercios', commerceRoutes);
