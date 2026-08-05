@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../api';
 
 export default function Perfil() {
   const navigate = useNavigate();
@@ -26,87 +26,89 @@ export default function Perfil() {
     paginaWeb: ''
   });
 
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  const datosComercio = localStorage.getItem('comercio');
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const datosComercio = localStorage.getItem('comercio');
 
-  if (!token || !datosComercio) {
-    navigate('/login');
-    return;
-  }
+    if (!token || !datosComercio) {
+      navigate('/login');
+      return;
+    }
 
-  const comLocal = JSON.parse(datosComercio);
+    const comLocal = JSON.parse(datosComercio);
 
-  // 1. Cargar estado básico con localStorage
-  setComercio(comLocal);
+    // 1. Cargar estado básico con localStorage
+    setComercio(comLocal);
 
-  // 2. Pedir la información completa y fresca a PostgreSQL
-  axios.get(`http://localhost:3000/api/comercios/${comLocal.id}`)
-    .then((res) => {
-      const comDB = res.data;
-      
-      // Actualizamos estado general y localStorage
-      setComercio(comDB);
-      localStorage.setItem('comercio', JSON.stringify(comDB));
+    // 2. Pedir la información completa a la base de datos a través de Render/Local
+    API.get(`/comercios/${comLocal.id}`)
+      .then((res) => {
+        const comDB = res.data;
+        
+        // Actualizamos estado general y localStorage
+        setComercio(comDB);
+        localStorage.setItem('comercio', JSON.stringify(comDB));
 
-      // 3. 👈 ACTUALIZAR FORM DATA PARA QUE SE VEAN EN LOS INPUTS
-      setFormData({
-        name: comDB.name || '',
-        description: comDB.description || '',
-        direccion: comDB.direccion || '',
-        tel: comDB.tel || '',
-        rubro: comDB.rubro || '',
-        instagram: comDB.redSocial?.instagram || '',
-        whatsapp: comDB.redSocial?.whatsapp || '',
-        paginaWeb: comDB.redSocial?.paginaWeb || ''
+        // 3. Actualizar inputs del formulario
+        setFormData({
+          name: comDB.name || '',
+          description: comDB.description || '',
+          direccion: comDB.direccion || '',
+          tel: comDB.tel || '',
+          rubro: comDB.rubro || '',
+          instagram: comDB.redSocial?.instagram || '',
+          whatsapp: comDB.redSocial?.whatsapp || '',
+          paginaWeb: comDB.redSocial?.paginaWeb || ''
+        });
+
+        // 4. Sincronizar Etiquetas
+        const listaLabels = comDB.Labels || comDB.labels || [];
+        const etiquetasLimpia = listaLabels.map((lbl) => 
+          typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
+        ).filter(Boolean);
+
+        setLabels(etiquetasLimpia);
+      })
+      .catch((err) => {
+        console.error('Error al sincronizar comercio con el servidor:', err);
+        
+        // Fallback usando localStorage
+        setFormData({
+          name: comLocal.name || '',
+          description: comLocal.description || '',
+          direccion: comLocal.direccion || '',
+          tel: comLocal.tel || '',
+          rubro: comLocal.rubro || '',
+          instagram: comLocal.redSocial?.instagram || '',
+          whatsapp: comLocal.redSocial?.whatsapp || '',
+          paginaWeb: comLocal.redSocial?.paginaWeb || ''
+        });
+
+        const listaLabelsLocal = comLocal.Labels || comLocal.labels || [];
+        const etiquetasLocal = listaLabelsLocal.map((lbl) => 
+          typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
+        ).filter(Boolean);
+        
+        setLabels(etiquetasLocal);
       });
-
-      // 4. Sincronizar Etiquetas
-      const listaLabels = comDB.Labels || comDB.labels || [];
-      const etiquetasLimpia = listaLabels.map((lbl) => 
-        typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
-      ).filter(Boolean);
-
-      setLabels(etiquetasLimpia);
-    })
-    .catch((err) => {
-      console.error('Error al sincronizar comercio con el servidor:', err);
-      
-      // Fallback usando localStorage si falla la red
-      setFormData({
-        name: comLocal.name || '',
-        description: comLocal.description || '',
-        direccion: comLocal.direccion || '',
-        tel: comLocal.tel || '',
-        rubro: comLocal.rubro || '',
-        instagram: comLocal.redSocial?.instagram || '',
-        whatsapp: comLocal.redSocial?.whatsapp || '',
-        paginaWeb: comDB.redSocial?.paginaWeb || ''
-      });
-
-      const listaLabelsLocal = comLocal.Labels || comLocal.labels || [];
-      const etiquetasLocal = listaLabelsLocal.map((lbl) => 
-        typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
-      ).filter(Boolean);
-      
-      setLabels(etiquetasLocal);
-    });
-}, [navigate]);
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Helper para obtener las URLs de la tabla 'Image' según su tipo (ENUM)
+  // Helper para construir la URL base de estáticos (imágenes)
+  const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
+
   const getImagenUrl = (tipo) => {
     if (comercio && comercio.images && Array.isArray(comercio.images)) {
       const img = comercio.images.find((i) => i.tipo === tipo);
-      return img ? `http://localhost:3000${img.url}` : null;
+      return img ? `${BASE_URL}${img.url}` : null;
     }
     return null;
   };
 
-  // --- LÓGICA DE ETIQUETAS (LABELS) ---
+  // --- LÓGICA DE ETIQUETAS ---
   const handleAgregarLabel = (e) => {
     e.preventDefault();
     const textoLimpio = nuevaLabel.trim().toLowerCase().replace('#', '');
@@ -121,7 +123,7 @@ useEffect(() => {
     setLabels(labels.filter((lbl) => lbl !== labelAEliminar));
   };
 
-  // --- GUARDAR CAMBIOS (PUT CON FORMDATA AL BACKEND) ---
+  // --- GUARDAR CAMBIOS ---
   const handleGuardar = async (e) => {
     e.preventDefault();
     setMensaje({ tipo: '', texto: '' });
@@ -143,7 +145,7 @@ useEffect(() => {
       if (archivoPromo1) data.append('promo1', archivoPromo1);
       if (archivoPromo2) data.append('promo2', archivoPromo2);
 
-      const res = await axios.put(`http://localhost:3000/api/comercios/${comercio.id}`, data, {
+      const res = await API.put(`/comercios/${comercio.id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -251,7 +253,7 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* --- SECCIÓN ETIQUETAS (LABELS) --- */}
+            {/* SECCIÓN ETIQUETAS */}
             <div className="border-t border-slate-700 pt-5 mt-2">
               <label className="block text-xs font-bold uppercase text-amber-400 mb-1">
                 Etiquetas de Búsqueda (Labels)

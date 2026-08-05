@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../api';
 import BloqueComercio from '../components/BloqueComercio';
 
 export default function Busqueda() {
@@ -8,7 +8,7 @@ export default function Busqueda() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/api/comercios')
+    API.get('/comercios')
       .then(res => {
         setComercios(res.data);
         setCargando(false);

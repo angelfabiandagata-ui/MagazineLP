@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,7 +8,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // 🔑 TUS CREDENCIALES FIJAS DE ADMIN (Cambialas por las que prefieras)
+  // 🔑 CREDENCIALES FIJAS DE ADMIN
   const ADMIN_EMAIL = 'admin@magazinelapunta.com';
   const ADMIN_PASSWORD = '99885522';
 
@@ -16,17 +16,17 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    // 1. EVALUAMOS SI SOS VOS (ACCESO SUPERADMIN)
+    // 1. EVALUAMOS SI ES ACCESO SUPERADMIN
     if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
       localStorage.setItem('token', 'token-admin-super-secreto');
       localStorage.setItem('rol', 'admin');
-      navigate('/admin'); // 👈 Te manda a tu Centro de Control
+      navigate('/admin');
       return;
     }
 
-    // 2. SI NO SOS ADMIN, INTENTA LOGUEAR UN COMERCIO CONTRA LA BD
+    // 2. SI NO ES ADMIN, INTENTA LOGUEAR UN COMERCIO CONTRA LA BD
     try {
-      const res = await axios.post('http://localhost:3000/api/auth/login', {
+      const res = await API.post('/auth/login', {
         email,
         password
       });
@@ -35,7 +35,7 @@ export default function Login() {
       localStorage.setItem('rol', 'comercio');
       localStorage.setItem('comercio', JSON.stringify(res.data.comercio));
 
-      navigate('/perfil'); // 👈 Manda al comercio a su perfil
+      navigate('/perfil');
     } catch (err) {
       setError(err.response?.data?.mensaje || 'Credenciales incorrectas o servidor no disponible.');
     }

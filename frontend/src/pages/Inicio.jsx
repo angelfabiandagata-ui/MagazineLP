@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../api';
 import BloqueComercio from '../components/BloqueComercio';
 import BloqueNoticias from '../components/BloqueNoticias';
 
@@ -13,7 +13,7 @@ export default function Inicio() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/api/comercios')
+    API.get('/comercios')
       .then(res => {
         const comerciosAleatorios = mezclarArray(res.data);
         setComercios(comerciosAleatorios);

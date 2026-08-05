@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import API from '../api';
 
 export default function Turismo() {
   const [atractivos, setAtractivos] = useState([]);
@@ -34,7 +35,7 @@ export default function Turismo() {
 
   useEffect(() => {
     // Si más adelante querés conectarlo a una tabla 'Turismo' en PostgreSQL:
-    axios.get('http://localhost:3000/api/turismo')
+    API.get('/turismo')
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
           setAtractivos(res.data);

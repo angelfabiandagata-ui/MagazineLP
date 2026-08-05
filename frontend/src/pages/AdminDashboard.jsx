@@ -5,7 +5,8 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const handleCerrarSesion = () => {
-    localStorage.removeItem('isAdmin');
+    // Se limpian las llaves de sesión guardadas en el Login
+    localStorage.clear();
     navigate('/login');
   };
 
@@ -60,7 +61,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={handleCerrarSesion}
-            className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-semibold text-xs px-4 py-2 rounded-xl transition-colors"
+            className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-semibold text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
           >
             🚪 Cerrar Sesión
           </button>

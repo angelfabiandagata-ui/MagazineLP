@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../api';
 
 export default function GestionNoticias() {
   const [noticias, setNoticias] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  // Cargar noticias desde la BD
+  // Cargar noticias desde la BD usando la API centralizada
   useEffect(() => {
-    axios.get('http://localhost:3000/api/noticias')
+    API.get('/noticias')
       .then(res => {
         if (Array.isArray(res.data)) {
           setNoticias(res.data);
@@ -31,7 +31,7 @@ export default function GestionNoticias() {
     const noticiaAEditar = noticias.find(n => n.id === id);
 
     try {
-      await axios.put(`http://localhost:3000/api/noticias/${id}`, noticiaAEditar);
+      await API.put(`/noticias/${id}`, noticiaAEditar);
       alert(`✅ Noticia #${id} guardada con éxito.`);
     } catch (error) {
       console.error('Error al actualizar la noticia:', error);

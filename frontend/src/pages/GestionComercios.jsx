@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../api';
 
 export default function GestionComercios() {
   const [comercios, setComercios] = useState([]);
@@ -8,7 +8,7 @@ export default function GestionComercios() {
   // Cargar la lista de comercios
   const obtenerComercios = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/api/comercios');
+      const res = await API.get('/comercios');
       // Ajustá 'res.data.comercios' según la estructura que devuelva tu backend
       setComercios(Array.isArray(res.data) ? res.data : res.data.comercios || []);
     } catch (error) {
@@ -26,13 +26,13 @@ export default function GestionComercios() {
   // Función para eliminar un comercio
   const handleEliminar = async (id, nombre) => {
     const confirmar = window.confirm(
-      `⚠️ ¿Estás seguro de que querés eliminar el comercio "${nombre}"?\nEsta acción borró todas sus imágenes y no se puede deshacer.`
+      `⚠️ ¿Estás seguro de que querés eliminar el comercio "${nombre}"?\nEsta acción borrará todas sus imágenes y no se puede deshacer.`
     );
 
     if (!confirmar) return;
 
     try {
-      await axios.delete(`http://localhost:3000/api/comercios/${id}`);
+      await API.delete(`/comercios/${id}`);
       alert(`✅ "${nombre}" fue eliminado con éxito.`);
       
       // Actualizamos el estado local filtrando el comercio eliminado

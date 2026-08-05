@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../api';
 
 export default function GestionTurismo() {
   const [atractivos, setAtractivos] = useState([
@@ -31,16 +31,16 @@ export default function GestionTurismo() {
 
   const [guardando, setGuardando] = useState(false);
 
-  // Cargar datos de la BD si el endpoint existe
+  // Cargar datos de la BD usando el cliente API
   useEffect(() => {
-    axios.get('http://localhost:3000/api/turismo')
+    API.get('/turismo')
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
           setAtractivos(res.data);
         }
       })
       .catch(() => {
-        // Mantiene el borrador si aún no está creada la tabla en la BD
+        // Mantiene el borrador inicial si aún no se han creado registros en la BD
       });
   }, []);
 
@@ -53,23 +53,23 @@ export default function GestionTurismo() {
 
   // Guardar cambios
   const handleGuardar = async (id) => {
-  setGuardando(true);
-  const puntoAEditar = atractivos.find(item => item.id === id);
+    setGuardando(true);
+    const puntoAEditar = atractivos.find(item => item.id === id);
 
-  try {
-    await axios.put(`http://localhost:3000/api/turismo/${id}`, puntoAEditar);
-    alert(`✅ Punto turístico "${puntoAEditar.titulo}" guardado en la Base de Datos.`);
-    
-    // Volvemos a traer los datos frescos de la BD
-    const res = await axios.get('http://localhost:3000/api/turismo');
-    setAtractivos(res.data);
-  } catch (error) {
-    console.error('Error al actualizar punto turístico:', error);
-    alert('❌ Error al guardar en la base de datos.');
-  } finally {
-    setGuardando(false);
-  }
-};
+    try {
+      await API.put(`/turismo/${id}`, puntoAEditar);
+      alert(`✅ Punto turístico "${puntoAEditar.titulo}" guardado en la Base de Datos.`);
+      
+      // Volvemos a traer los datos frescos de la BD
+      const res = await API.get('/turismo');
+      setAtractivos(res.data);
+    } catch (error) {
+      console.error('Error al actualizar punto turístico:', error);
+      alert('❌ Error al guardar en la base de datos.');
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-8 pt-24">
@@ -175,7 +175,7 @@ export default function GestionTurismo() {
               <button
                 onClick={() => handleGuardar(item.id)}
                 disabled={guardando}
-                className="mt-5 w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs py-2.5 rounded-xl transition-colors flex justify-center items-center gap-1 shadow-lg"
+                className="mt-5 w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs py-2.5 rounded-xl transition-colors flex justify-center items-center gap-1 shadow-lg disabled:opacity-50"
               >
                 💾 Guardar Punto #{index + 1}
               </button>

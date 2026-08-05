@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API from '../api';
 
 export default function Registro() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function Registro() {
 
     try {
       // Petición al backend de Node para crear el usuario/comercio
-      const res = await axios.post('http://localhost:3000/api/auth/register', formData);
+    const res = await API.post('/auth/register', formData);
 
       setMensaje({
         tipo: 'exito',
