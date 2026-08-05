@@ -3,11 +3,10 @@ import Commerce from '../models/Commerce.js';
 import Label from '../models/Label.js';
 import Image from '../models/Image.js';
 import upload from '../middleware/upload.js';
-import { borrarArchivoFisico } from '../utils/deleteFile.js';
 
 const router = express.Router();
 
-// Configuración de los campos para subir archivos
+// Configuración de los campos para subir archivos con Multer / Cloudinary
 const uploadFields = upload.fields([
   { name: 'imagenFondo', maxCount: 1 },
   { name: 'promo1', maxCount: 1 },
@@ -31,11 +30,10 @@ router.get('/', async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
-    // Forzar que siempre retorne un Array estructurado
     return res.status(200).json(Array.isArray(comercios) ? comercios : []);
   } catch (error) {
     console.error('Error al obtener comercios:', error);
-    return res.status(500).json([]); // Retorna array vacío en error para no romper el .filter() del frontend
+    return res.status(500).json([]);
   }
 });
 
@@ -62,7 +60,6 @@ router.get('/:id', async (req, res) => {
 
 // PUT /api/comercios/:id -> Actualizar perfil e imágenes
 router.put('/:id', (req, res, next) => {
-  // Manejo de errores de multer antes de entrar a la lógica
   uploadFields(req, res, (err) => {
     if (err) {
       console.error('Error al procesar imágenes subidas:', err);
@@ -89,18 +86,18 @@ router.put('/:id', (req, res, next) => {
     comercio.redSocial = { instagram, whatsapp, paginaWeb };
     await comercio.save();
 
-    // 2. Procesar imágenes por puesto borrando la anterior
+    // 2. Procesar imágenes en Cloudinary
     const procesarImagenPorPuesto = async (fileArray, tipoPuesto) => {
       if (!fileArray || !fileArray[0]) return;
 
-      const nuevaUrl = `/uploads/${fileArray[0].filename}`;
+      // Cloudinary almacena la URL HTTPS completa en .path (o .secure_url)
+      const nuevaUrl = fileArray[0].path || fileArray[0].secure_url;
 
       const imagenVieja = await Image.findOne({
         where: { commerceId: comercio.id, tipo: tipoPuesto }
       });
 
       if (imagenVieja) {
-        borrarArchivoFisico(imagenVieja.url);
         imagenVieja.url = nuevaUrl;
         await imagenVieja.save();
       } else {
@@ -162,18 +159,10 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const comercio = await Commerce.findByPk(id, {
-      include: [{ model: Image, as: 'images' }]
-    });
+    const comercio = await Commerce.findByPk(id);
 
     if (!comercio) {
       return res.status(404).json({ mensaje: 'El comercio no existe.' });
-    }
-
-    if (comercio.images && comercio.images.length > 0) {
-      for (const img of comercio.images) {
-        borrarArchivoFisico(img.url);
-      }
     }
 
     await comercio.destroy();
