@@ -1,8 +1,7 @@
-import axios from 'axios';
+// Servir los archivos estáticos de la app compilada desde /frontend/dist
+app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
-// Asegura que la URL base tome la variable de Render o fallback al localhost
-const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://magazinelp.onrender.com/api'
+// Fallback para React Router
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
-
-export default API;
