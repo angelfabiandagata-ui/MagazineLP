@@ -26,15 +26,23 @@ export default function Perfil() {
     paginaWeb: ''
   });
 
-  // Base URL para resolver estáticos (imágenes) apuntando al backend real
+  // Base URL para resolver estáticos (imágenes viejas) apuntando al backend real
   const API_URL = import.meta.env.VITE_API_URL || 'https://magazinelp.onrender.com/api';
   const BACKEND_URL = API_URL.replace('/api', '');
 
+  // Helper seguro para resolver la URL de la imagen
   const getImagenUrl = (tipo) => {
     if (comercio && comercio.images && Array.isArray(comercio.images)) {
       const img = comercio.images.find((i) => i.tipo === tipo);
       if (!img || !img.url) return null;
-      return img.url.startsWith('http') ? img.url : `${BACKEND_URL}${img.url}`;
+
+      // 1. Si es una URL completa (Cloudinary), se devuelve intacta
+      if (img.url.startsWith('http://') || img.url.startsWith('https://')) {
+        return img.url;
+      }
+
+      // 2. Si es una ruta relativa (/uploads/...), se le adosa la dirección del backend
+      return `${BACKEND_URL}${img.url.startsWith('/') ? '' : '/'}${img.url}`;
     }
     return null;
   };
