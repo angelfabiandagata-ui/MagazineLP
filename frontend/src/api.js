@@ -1,7 +1,7 @@
-// Servir los archivos estáticos de la app compilada desde /frontend/dist
-app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
+import axios from 'axios';
 
-// Fallback para React Router
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+const API = axios.create({
+  baseURL: '/api'
 });
+
+export default API; // 👈 Esta línea es la que faltaba o estaba escrita diferente
