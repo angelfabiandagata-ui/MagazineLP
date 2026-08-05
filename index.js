@@ -17,7 +17,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middlewares
-app.use(cors());
+// Permite peticiones de cualquier origen para evitar bloqueos en Render
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // 👈 Servir imágenes almacenadas en la carpeta /uploads
