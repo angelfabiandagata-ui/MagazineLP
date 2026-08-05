@@ -26,6 +26,19 @@ export default function Perfil() {
     paginaWeb: ''
   });
 
+  // Base URL para resolver estáticos (imágenes) apuntando al backend real
+  const API_URL = import.meta.env.VITE_API_URL || 'https://magazinelp.onrender.com/api';
+  const BACKEND_URL = API_URL.replace('/api', '');
+
+  const getImagenUrl = (tipo) => {
+    if (comercio && comercio.images && Array.isArray(comercio.images)) {
+      const img = comercio.images.find((i) => i.tipo === tipo);
+      if (!img || !img.url) return null;
+      return img.url.startsWith('http') ? img.url : `${BACKEND_URL}${img.url}`;
+    }
+    return null;
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const datosComercio = localStorage.getItem('comercio');
@@ -40,16 +53,15 @@ export default function Perfil() {
     // 1. Cargar estado básico con localStorage
     setComercio(comLocal);
 
-    // 2. Pedir la información completa a la base de datos a través de Render/Local
+    // 2. Pedir información actualizada al backend
     API.get(`/comercios/${comLocal.id}`)
       .then((res) => {
         const comDB = res.data;
         
-        // Actualizamos estado general y localStorage
         setComercio(comDB);
         localStorage.setItem('comercio', JSON.stringify(comDB));
 
-        // 3. Actualizar inputs del formulario
+        // Actualizar inputs del formulario
         setFormData({
           name: comDB.name || '',
           description: comDB.description || '',
@@ -61,7 +73,7 @@ export default function Perfil() {
           paginaWeb: comDB.redSocial?.paginaWeb || ''
         });
 
-        // 4. Sincronizar Etiquetas
+        // Sincronizar etiquetas
         const listaLabels = comDB.Labels || comDB.labels || [];
         const etiquetasLimpia = listaLabels.map((lbl) => 
           typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
@@ -95,17 +107,6 @@ export default function Perfil() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // Helper para construir la URL base de estáticos (imágenes)
-  const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
-
-  const getImagenUrl = (tipo) => {
-    if (comercio && comercio.images && Array.isArray(comercio.images)) {
-      const img = comercio.images.find((i) => i.tipo === tipo);
-      return img ? `${BASE_URL}${img.url}` : null;
-    }
-    return null;
   };
 
   // --- LÓGICA DE ETIQUETAS ---
@@ -149,13 +150,20 @@ export default function Perfil() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // Actualizar localStorage y el estado del comercio
-      localStorage.setItem('comercio', JSON.stringify(res.data.comercio));
-      setComercio(res.data.comercio);
+      // Se contempla si el backend responde { comercio: {...} } o directo {...}
+      const comercioActualizado = res.data.comercio || res.data;
+
+      localStorage.setItem('comercio', JSON.stringify(comercioActualizado));
+      setComercio(comercioActualizado);
+
+      // Limpiamos los archivos seleccionados de los inputs
+      setArchivoFondo(null);
+      setArchivoPromo1(null);
+      setArchivoPromo2(null);
 
       setMensaje({ tipo: 'exito', texto: '¡Perfil e imágenes actualizados con éxito!' });
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error al guardar datos:', err);
       setMensaje({ 
         tipo: 'error', 
         texto: err.response?.data?.mensaje || 'Error al subir los datos e imágenes.' 

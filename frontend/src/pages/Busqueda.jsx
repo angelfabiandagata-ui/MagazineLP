@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import API from '../api';
 import BloqueComercio from '../components/BloqueComercio';
 
@@ -9,112 +9,113 @@ export default function Busqueda() {
 
   useEffect(() => {
     API.get('/comercios')
-      .then(res => {
-        setComercios(res.data);
-        setCargando(false);
+      .then((res) => {
+        // 1. Desestructuración segura para evitar "e.filter is not a function"
+        let datos = [];
+        if (Array.isArray(res.data)) {
+          datos = res.data;
+        } else if (res.data && typeof res.data === 'object') {
+          datos = res.data.comercios || res.data.data || [];
+        }
+
+        setComercios(datos);
       })
-      .catch(err => {
-        console.error("Error al cargar comercios:", err);
+      .catch((err) => {
+        console.error('Error al obtener comercios para búsqueda:', err);
+        setComercios([]); // Fallback a arreglo vacío
+      })
+      .finally(() => {
         setCargando(false);
       });
   }, []);
 
-  // Filtrado en tiempo real por Nombre, Rubro o Etiquetas
+  // 2. Filtro seguro de búsqueda (Insensible a mayúsculas/minúsculas y tolerante a nulls)
+  const termino = busqueda.trim().toLowerCase();
+
   const comerciosFiltrados = comercios.filter((comercio) => {
-    const termino = busqueda.toLowerCase().trim().replace('#', '');
-    if (!termino) return true;
+    if (!termino) return true; // Si no hay búsqueda, muestra todos
 
-    const coincideNombre = comercio.name?.toLowerCase().includes(termino);
-    const coincideRubro = comercio.rubro?.toLowerCase().includes(termino);
+    const nombre = (comercio.name || '').toLowerCase();
+    const descripcion = (comercio.description || '').toLowerCase();
+    const rubro = (comercio.rubro || '').toLowerCase();
 
-    const coincideLabel = (comercio.Labels || comercio.labels)?.some(l => {
-      const nombreLabel = typeof l === 'object' ? (l.label || l.name) : l;
-      return nombreLabel?.toLowerCase().includes(termino);
-    });
+    // Extraer labels limpias tolerando objetos o strings
+    const listaLabels = comercio.Labels || comercio.labels || [];
+    const etiquetasStr = listaLabels
+      .map((lbl) => (typeof lbl === 'object' ? lbl.label || lbl.name : lbl))
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
 
-    return coincideNombre || coincideRubro || coincideLabel;
+    return (
+      nombre.includes(termino) ||
+      descripcion.includes(termino) ||
+      rubro.includes(termino) ||
+      etiquetasStr.includes(termino)
+    );
   });
 
   if (cargando) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center pt-20">
-        <p className="text-xl animate-pulse">Cargando buscador...</p>
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+        <p className="text-xl animate-pulse font-semibold text-amber-400">
+          Cargando buscador de La Punta...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white pt-24 pb-12 px-4 md:px-8">
+    <div className="bg-slate-900 min-h-screen text-white pt-24 pb-12">
       
-      {/* CABECERA Y BUSCADOR */}
-      <div className="max-w-4xl mx-auto text-center mb-10">
-        <h1 className="text-3xl md:text-5xl font-extrabold mb-3">
-          ¿Qué estás buscando en <span className="text-amber-400">La Punta</span>?
+      {/* BARRA DE BÚSQUEDA Y CABECERA */}
+      <div className="max-w-4xl mx-auto px-6 mb-8 text-center">
+        <h1 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-amber-400 mb-2">
+          Buscador de Comercios
         </h1>
-        <p className="text-gray-400 text-sm md:text-base mb-6">
-          Encontrá comercios por su nombre, rubro o etiquetas de productos.
+        <p className="text-gray-400 text-sm mb-6">
+          Encontrá rubros, productos, servicios o etiquetas (ej: <i>medialunas</i>, <i>facia</i>, <i>delivery</i>).
         </p>
 
-        {/* INPUT DE BÚSQUEDA */}
-        <div className="relative max-w-2xl mx-auto mb-6">
+        <div className="relative max-w-xl mx-auto">
           <input
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Escribí una palabra clave (ej: cerveza, helado, ropa, taller)..."
-            className="w-full py-4 pl-12 pr-10 rounded-2xl bg-slate-800 border border-amber-500/40 text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-sm md:text-base shadow-xl"
+            placeholder="¿Qué estás buscando hoy en La Punta?"
+            className="w-full py-3.5 px-5 pl-12 rounded-2xl bg-slate-800 border border-slate-700 text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 shadow-xl transition-all"
           />
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-400 text-lg">
+          <span className="absolute left-4 top-3.5 text-gray-400 text-lg">
             🔍
           </span>
           {busqueda && (
             <button
               onClick={() => setBusqueda('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white font-bold"
+              className="absolute right-4 top-3.5 text-gray-400 hover:text-white font-bold text-sm"
             >
               ✕
             </button>
           )}
         </div>
-
-        {/* TAGS RÁPIDAS DE EJEMPLO */}
-        <div className="flex flex-wrap gap-2 justify-center text-xs text-gray-400">
-          <span className="self-center">Populares:</span>
-          {['Delivery', 'Panadería', 'Cervecería', 'Indumentaria', 'Mecánica'].map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setBusqueda(tag)}
-              className="bg-slate-800 hover:bg-amber-500 hover:text-black border border-slate-700 px-3 py-1 rounded-full transition-all"
-            >
-              #{tag}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* RESULTADOS */}
-      {comerciosFiltrados.length === 0 ? (
-        <div className="max-w-md mx-auto text-center py-12 bg-slate-800/50 rounded-2xl border border-slate-700/50 p-6">
-          <p className="text-xl font-bold text-amber-400 mb-2">Sin resultados</p>
-          <p className="text-gray-400 text-sm mb-6">
-            No encontramos comercios que coincidan con "<b>{busqueda}</b>".
-          </p>
-          <button
-            onClick={() => setBusqueda('')}
-            className="px-5 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs uppercase font-bold tracking-wider"
-          >
-            Ver todos
-          </button>
-        </div>
-      ) : (
-        <div className="max-w-5xl mx-auto space-y-12">
-          {comerciosFiltrados.map((comercio) => (
-            <div key={comercio.id} className="rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
-              <BloqueComercio comercio={comercio} />
-            </div>
-          ))}
-        </div>
-      )}
+      {/* RESULTADOS DE BÚSQUEDA */}
+      <div className="scroll-container">
+        {comerciosFiltrados.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center text-gray-400">
+            <p className="text-lg font-semibold mb-2">
+              No se encontraron resultados para "{busqueda}"
+            </p>
+            <p className="text-xs text-gray-500">
+              Proba buscando palabras más generales como "rotisería", "ropa" o "servicio".
+            </p>
+          </div>
+        ) : (
+          comerciosFiltrados.map((comercio) => (
+            <BloqueComercio key={comercio.id} comercio={comercio} />
+          ))
+        )}
+      </div>
 
     </div>
   );

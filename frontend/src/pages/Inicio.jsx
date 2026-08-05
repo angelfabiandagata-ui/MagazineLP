@@ -3,8 +3,9 @@ import API from '../api';
 import BloqueComercio from '../components/BloqueComercio';
 import BloqueNoticias from '../components/BloqueNoticias';
 
-// Helper para ordenar aleatoriamente la lista de comercios
+// Helper seguro para ordenar aleatoriamente la lista de comercios
 const mezclarArray = (array) => {
+  if (!Array.isArray(array)) return [];
   return [...array].sort(() => Math.random() - 0.5);
 };
 
@@ -15,12 +16,22 @@ export default function Inicio() {
   useEffect(() => {
     API.get('/comercios')
       .then(res => {
-        const comerciosAleatorios = mezclarArray(res.data);
+        // Validamos si la respuesta es directo un Array o viene dentro de una propiedad
+        let datos = [];
+        if (Array.isArray(res.data)) {
+          datos = res.data;
+        } else if (res.data && typeof res.data === 'object') {
+          datos = res.data.comercios || res.data.data || [];
+        }
+
+        const comerciosAleatorios = mezclarArray(datos);
         setComercios(comerciosAleatorios);
-        setCargando(false);
       })
       .catch(err => {
         console.error("Error al cargar comercios:", err);
+        setComercios([]); // Fallback seguro a Array vacío
+      })
+      .finally(() => {
         setCargando(false);
       });
   }, []);
