@@ -136,16 +136,12 @@ router.put('/:id', verificarToken, (req, res, next) => {
     return res.status(500).json({ mensaje: 'Error al procesar los datos.' });
   }
 
-  // Tanto en PUT como en DELETE:
-const idUsuarioToken = req.usuario.id || req.usuario.userId || req.usuario.commerceId;
+  // --- AUTORIZACIÓN DIRECTA (Comparación estricta en String) ---
+    const esPropietario = String(comercio.id) === String(req.usuario.id);
+    const esAdmin = Boolean(req.usuario.esAdmin);
 
-console.log(`[AUTH CHECK] Comercio ID: ${comercio.id} (${typeof comercio.id}) | Token ID: ${idUsuarioToken} (${typeof idUsuarioToken})`);
-
-const esPropietario = Number(comercio.id) === Number(idUsuarioToken);
-const esAdmin = Boolean(req.usuario.esAdmin);
-
-if (!esPropietario && !esAdmin) {
-  return res.status(403).json({ mensaje: 'No tenés permisos para esta acción.' });
+    if (!esPropietario && !esAdmin) {
+      return res.status(403).json({ mensaje: 'No tenés permisos para modificar este comercio.' });
 }
 });
 
@@ -172,17 +168,13 @@ router.delete('/:id', verificarToken, async (req, res) => {
     return res.status(500).json({ mensaje: 'Error al intentar eliminar el comercio.' });
   }
 
-  // Tanto en PUT como en DELETE:
-const idUsuarioToken = req.usuario.id || req.usuario.userId || req.usuario.commerceId;
+  // --- AUTORIZACIÓN DIRECTA (Comparación estricta en String) ---
+    const esPropietario = String(comercio.id) === String(req.usuario.id);
+    const esAdmin = Boolean(req.usuario.esAdmin);
 
-console.log(`[AUTH CHECK] Comercio ID: ${comercio.id} (${typeof comercio.id}) | Token ID: ${idUsuarioToken} (${typeof idUsuarioToken})`);
-
-const esPropietario = Number(comercio.id) === Number(idUsuarioToken);
-const esAdmin = Boolean(req.usuario.esAdmin);
-
-if (!esPropietario && !esAdmin) {
-  return res.status(403).json({ mensaje: 'No tenés permisos para esta acción.' });
-}
+    if (!esPropietario && !esAdmin) {
+      return res.status(403).json({ mensaje: 'No tenés permisos para modificar este comercio.' });
+    }
 });
 
 export default router;
