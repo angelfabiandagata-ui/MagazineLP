@@ -1,4 +1,5 @@
 import Commerce from './Commerce.js';
+import User from './User.js';
 import Label from './Label.js';
 import Image from './Image.js';
 
