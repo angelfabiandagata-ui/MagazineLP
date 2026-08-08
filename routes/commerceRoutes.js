@@ -3,7 +3,7 @@ import Commerce from '../models/Commerce.js';
 import Label from '../models/Label.js';
 import Image from '../models/Image.js';
 import upload from '../middleware/upload.js';
-import { verificarToken } from '../middleware/auth.js'; // 1. Importar middleware
+import { verificarToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -62,11 +62,9 @@ router.put('/:id', verificarToken, (req, res, next) => {
       return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
     }
 
-    // 2. Control de Autorización (BOLA / IDOR)
-    const idUsuarioToken = req.usuario.id;
-    const idDuenioComercio = comercio.userId || comercio.UserId;
-
-    const esPropietario = idDuenioComercio && String(idDuenioComercio) === String(idUsuarioToken);
+    // --- AUTORIZACIÓN DIRECTA (1 Comercio = 1 Usuario) ---
+    // El id del comercio coincide directamente con el id guardado en req.usuario
+    const esPropietario = Number(comercio.id) === Number(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
     if (!esPropietario && !esAdmin) {
@@ -147,9 +145,8 @@ router.delete('/:id', verificarToken, async (req, res) => {
 
     if (!comercio) return res.status(404).json({ mensaje: 'El comercio no existe.' });
 
-    const idUsuarioToken = req.usuario.id;
-    const idDuenioComercio = comercio.userId || comercio.UserId;
-    const esPropietario = idDuenioComercio && String(idDuenioComercio) === String(idUsuarioToken);
+    // --- AUTORIZACIÓN DIRECTA ---
+    const esPropietario = Number(comercio.id) === Number(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
     if (!esPropietario && !esAdmin) {
