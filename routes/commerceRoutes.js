@@ -1,3 +1,52 @@
+import express from 'express';
+import Commerce from '../models/Commerce.js';
+import Label from '../models/Label.js';
+import Image from '../models/Image.js';
+import upload from '../middleware/upload.js';
+import { verificarToken } from '../middleware/auth.js';
+
+const router = express.Router();
+
+const uploadFields = upload.fields([
+  { name: 'imagenFondo', maxCount: 1 },
+  { name: 'promo1', maxCount: 1 },
+  { name: 'promo2', maxCount: 1 }
+]);
+
+// GET /api/comercios
+router.get('/', async (req, res) => {
+  try {
+    const comercios = await Commerce.findAll({
+      include: [
+        { model: Label, through: { attributes: [] } },
+        { model: Image, as: 'images' }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return res.status(200).json(Array.isArray(comercios) ? comercios : []);
+  } catch (error) {
+    console.error('Error al obtener comercios:', error);
+    return res.status(500).json([]);
+  }
+});
+
+// GET /api/comercios/:id
+router.get('/:id', async (req, res) => {
+  try {
+    const comercio = await Commerce.findByPk(req.params.id, {
+      include: [
+        { model: Label, through: { attributes: [] } },
+        { model: Image, as: 'images' }
+      ]
+    });
+    if (!comercio) return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
+    return res.status(200).json(comercio);
+  } catch (error) {
+    console.error('Error al obtener comercio:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+  }
+});
+
 // PUT /api/comercios/:id
 router.put('/:id', verificarToken, (req, res, next) => {
   uploadFields(req, res, (err) => {
@@ -10,18 +59,12 @@ router.put('/:id', verificarToken, (req, res, next) => {
 }, async (req, res) => {
   try {
     const { id } = req.params;
-
     const comercio = await Commerce.findByPk(id);
-    if (!comercio) {
-      return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
-    }
+    if (!comercio) return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
 
-    // --- AUTORIZACIÓN VÁLIDA PARA UUID ---
-    const idUsuarioToken = req.usuario.id; // UUID del usuario logueado
-    
-    // Si la relación en Sequelize se llama userId (o UsuarioId)
+    // Validación de propietario contra UUID
+    const idUsuarioToken = req.usuario.id;
     const idDuenioComercio = comercio.userId || comercio.UserId;
-
     const esPropietario = idDuenioComercio && String(idDuenioComercio) === String(idUsuarioToken);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
@@ -31,7 +74,6 @@ router.put('/:id', verificarToken, (req, res, next) => {
 
     const { name, description, direccion, tel, rubro, labels, instagram, whatsapp, paginaWeb } = req.body;
 
-    // Actualización de datos...
     comercio.name = name || comercio.name;
     comercio.description = description !== undefined ? description : comercio.description;
     comercio.direccion = direccion !== undefined ? direccion : comercio.direccion;
@@ -40,24 +82,16 @@ router.put('/:id', verificarToken, (req, res, next) => {
     comercio.redSocial = { instagram, whatsapp, paginaWeb };
     await comercio.save();
 
-    // Procesar imágenes...
     const procesarImagenPorPuesto = async (fileArray, tipoPuesto) => {
       if (!fileArray || !fileArray[0]) return;
       const nuevaUrl = fileArray[0].path || fileArray[0].secure_url;
-
-      const imagenVieja = await Image.findOne({
-        where: { commerceId: comercio.id, tipo: tipoPuesto }
-      });
+      const imagenVieja = await Image.findOne({ where: { commerceId: comercio.id, tipo: tipoPuesto } });
 
       if (imagenVieja) {
         imagenVieja.url = nuevaUrl;
         await imagenVieja.save();
       } else {
-        await Image.create({
-          url: nuevaUrl,
-          tipo: tipoPuesto,
-          commerceId: comercio.id
-        });
+        await Image.create({ url: nuevaUrl, tipo: tipoPuesto, commerceId: comercio.id });
       }
     };
 
@@ -67,7 +101,6 @@ router.put('/:id', verificarToken, (req, res, next) => {
       await procesarImagenPorPuesto(req.files.promo2, 'PROMO_2');
     }
 
-    // Procesar Labels...
     if (labels !== undefined && labels !== null) {
       let labelsArray = [];
       try {
@@ -99,11 +132,35 @@ router.put('/:id', verificarToken, (req, res, next) => {
     });
 
     return res.status(200).json(comercioActualizado);
-
   } catch (error) {
     console.error('Error al actualizar comercio:', error);
     return res.status(500).json({ mensaje: 'Error al procesar los datos.' });
   }
 });
+
+// DELETE /api/comercios/:id
+router.delete('/:id', verificarToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const comercio = await Commerce.findByPk(id);
+    if (!comercio) return res.status(404).json({ mensaje: 'El comercio no existe.' });
+
+    const idUsuarioToken = req.usuario.id;
+    const idDuenioComercio = comercio.userId || comercio.UserId;
+    const esPropietario = idDuenioComercio && String(idDuenioComercio) === String(idUsuarioToken);
+    const esAdmin = Boolean(req.usuario.esAdmin);
+
+    if (!esPropietario && !esAdmin) {
+      return res.status(403).json({ mensaje: 'No tenés permisos para eliminar este comercio.' });
+    }
+
+    await comercio.destroy();
+    return res.status(200).json({ id: Number(id), mensaje: `Comercio "${comercio.name}" eliminado correctamente.` });
+  } catch (error) {
+    console.error('Error al eliminar comercio:', error);
+    return res.status(500).json({ mensaje: 'Error al intentar eliminar el comercio.' });
+  }
+});
+
 
 export default router;
