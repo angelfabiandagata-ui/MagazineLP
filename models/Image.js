@@ -8,7 +8,7 @@ const Image = sequelize.define('Image', {
     primaryKey: true,
   },
   url: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
     allowNull: false,
   },
   tipo: {
