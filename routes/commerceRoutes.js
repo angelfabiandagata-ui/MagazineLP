@@ -1,4 +1,5 @@
 import express from 'express';
+import User from '../models/User.js';
 import Commerce from '../models/Commerce.js';
 import Label from '../models/Label.js';
 import Image from '../models/Image.js';
