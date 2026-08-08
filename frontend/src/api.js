@@ -4,6 +4,7 @@ const API = axios.create({
   baseURL: 'https://magazinelp.onrender.com/api'
 });
 
+// Interceptor para enviar el token JWT en TODAS las peticiones (JSON o FormData)
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
