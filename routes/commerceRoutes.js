@@ -3,6 +3,7 @@ import Commerce from '../models/Commerce.js';
 import Label from '../models/Label.js';
 import Image from '../models/Image.js';
 import upload from '../middleware/upload.js';
+import { verificarToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -58,8 +59,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/comercios/:id -> Actualizar perfil e imágenes
-router.put('/:id', (req, res, next) => {
+// PUT /api/comercios/:id -> Actualizar perfil e imágenes (Protegido por Autenticación y Propietario)
+router.put('/:id', verificarToken, (req, res, next) => {
   uploadFields(req, res, (err) => {
     if (err) {
       console.error('Error al procesar imágenes subidas:', err);
@@ -70,12 +71,22 @@ router.put('/:id', (req, res, next) => {
 }, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, direccion, tel, rubro, labels, instagram, whatsapp, paginaWeb } = req.body;
 
     const comercio = await Commerce.findByPk(id);
     if (!comercio) {
       return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
     }
+
+    // --- VALIDACIÓN DE AUTORIZACIÓN (IDOR / BOLA) ---
+    // Verifica si el ID del comercio (o userId) coincide con el ID del token del usuario logueado
+    const esPropietario = Number(comercio.id) === Number(req.usuario.id) || Number(comercio.userId) === Number(req.usuario.id);
+    const esAdmin = Boolean(req.usuario.esAdmin);
+
+    if (!esPropietario && !esAdmin) {
+      return res.status(403).json({ mensaje: 'No tenés permisos para modificar este comercio.' });
+    }
+
+    const { name, description, direccion, tel, rubro, labels, instagram, whatsapp, paginaWeb } = req.body;
 
     // 1. Actualizar datos de texto
     comercio.name = name || comercio.name;
@@ -90,7 +101,6 @@ router.put('/:id', (req, res, next) => {
     const procesarImagenPorPuesto = async (fileArray, tipoPuesto) => {
       if (!fileArray || !fileArray[0]) return;
 
-      // Cloudinary almacena la URL HTTPS completa en .path (o .secure_url)
       const nuevaUrl = fileArray[0].path || fileArray[0].secure_url;
 
       const imagenVieja = await Image.findOne({
@@ -154,8 +164,8 @@ router.put('/:id', (req, res, next) => {
   }
 });
 
-// DELETE /api/comercios/:id -> Eliminar un comercio
-router.delete('/:id', async (req, res) => {
+// DELETE /api/comercios/:id -> Eliminar un comercio (Protegido por Autenticación y Propietario)
+router.delete('/:id', verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -163,6 +173,14 @@ router.delete('/:id', async (req, res) => {
 
     if (!comercio) {
       return res.status(404).json({ mensaje: 'El comercio no existe.' });
+    }
+
+    // --- VALIDACIÓN DE AUTORIZACIÓN (IDOR / BOLA) ---
+    const esPropietario = Number(comercio.id) === Number(req.usuario.id) || Number(comercio.userId) === Number(req.usuario.id);
+    const esAdmin = Boolean(req.usuario.esAdmin);
+
+    if (!esPropietario && !esAdmin) {
+      return res.status(403).json({ mensaje: 'No tenés permisos para eliminar este comercio.' });
     }
 
     await comercio.destroy();
