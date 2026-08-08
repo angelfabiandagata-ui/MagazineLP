@@ -22,6 +22,3 @@ const upload = multer({ storage });
 
 export default upload;
 
-//cambios
-
-export default upload;
