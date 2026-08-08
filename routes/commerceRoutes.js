@@ -105,3 +105,5 @@ router.put('/:id', verificarToken, (req, res, next) => {
     return res.status(500).json({ mensaje: 'Error al procesar los datos.' });
   }
 });
+
+export default router;
