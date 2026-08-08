@@ -1,10 +1,9 @@
 import express from 'express';
-import User from '../models/User.js';
 import Commerce from '../models/Commerce.js';
 import Label from '../models/Label.js';
 import Image from '../models/Image.js';
 import upload from '../middleware/upload.js';
-import { verificarToken } from '../middleware/auth.js';
+import { verificarToken } from '../middleware/auth.js'; // 1. Importar middleware
 
 const router = express.Router();
 
@@ -14,7 +13,7 @@ const uploadFields = upload.fields([
   { name: 'promo2', maxCount: 1 }
 ]);
 
-// GET /api/comercios
+// GET /api/comercios (Público)
 router.get('/', async (req, res) => {
   try {
     const comercios = await Commerce.findAll({
@@ -31,7 +30,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/comercios/:id
+// GET /api/comercios/:id (Público)
 router.get('/:id', async (req, res) => {
   try {
     const comercio = await Commerce.findByPk(req.params.id, {
@@ -48,24 +47,25 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/comercios/:id
+// PUT /api/comercios/:id (Protegido)
 router.put('/:id', verificarToken, (req, res, next) => {
   uploadFields(req, res, (err) => {
-    if (err) {
-      console.error('Error al procesar imágenes subidas:', err);
-      return res.status(400).json({ mensaje: 'Error en la subida de archivos.' });
-    }
+    if (err) return res.status(400).json({ mensaje: 'Error en la subida de archivos.' });
     next();
   });
 }, async (req, res) => {
   try {
     const { id } = req.params;
     const comercio = await Commerce.findByPk(id);
-    if (!comercio) return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
 
-    // Validación de propietario contra UUID
+    if (!comercio) {
+      return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
+    }
+
+    // 2. Control de Autorización (BOLA / IDOR)
     const idUsuarioToken = req.usuario.id;
     const idDuenioComercio = comercio.userId || comercio.UserId;
+
     const esPropietario = idDuenioComercio && String(idDuenioComercio) === String(idUsuarioToken);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
@@ -139,11 +139,12 @@ router.put('/:id', verificarToken, (req, res, next) => {
   }
 });
 
-// DELETE /api/comercios/:id
+// DELETE /api/comercios/:id (Protegido)
 router.delete('/:id', verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
     const comercio = await Commerce.findByPk(id);
+
     if (!comercio) return res.status(404).json({ mensaje: 'El comercio no existe.' });
 
     const idUsuarioToken = req.usuario.id;
@@ -162,6 +163,5 @@ router.delete('/:id', verificarToken, async (req, res) => {
     return res.status(500).json({ mensaje: 'Error al intentar eliminar el comercio.' });
   }
 });
-
 
 export default router;
