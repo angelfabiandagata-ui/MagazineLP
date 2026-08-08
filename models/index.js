@@ -10,4 +10,7 @@ Label.belongsToMany(Commerce, { through: 'CommerceLabels' });
 Commerce.hasMany(Image, { foreignKey: 'commerceId', as: 'images', onDelete: 'CASCADE' });
 Image.belongsTo(Commerce, { foreignKey: 'commerceId' });
 
+User.hasOne(Commerce, { foreignKey: 'userId' });
+Commerce.belongsTo(User, { foreignKey: 'userId' });
+
 export { Commerce, Label, Image };
