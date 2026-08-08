@@ -135,6 +135,18 @@ router.put('/:id', verificarToken, (req, res, next) => {
     console.error('Error al actualizar comercio:', error);
     return res.status(500).json({ mensaje: 'Error al procesar los datos.' });
   }
+
+  // Tanto en PUT como en DELETE:
+const idUsuarioToken = req.usuario.id || req.usuario.userId || req.usuario.commerceId;
+
+console.log(`[AUTH CHECK] Comercio ID: ${comercio.id} (${typeof comercio.id}) | Token ID: ${idUsuarioToken} (${typeof idUsuarioToken})`);
+
+const esPropietario = Number(comercio.id) === Number(idUsuarioToken);
+const esAdmin = Boolean(req.usuario.esAdmin);
+
+if (!esPropietario && !esAdmin) {
+  return res.status(403).json({ mensaje: 'No tenés permisos para esta acción.' });
+}
 });
 
 // DELETE /api/comercios/:id (Protegido)
@@ -159,6 +171,18 @@ router.delete('/:id', verificarToken, async (req, res) => {
     console.error('Error al eliminar comercio:', error);
     return res.status(500).json({ mensaje: 'Error al intentar eliminar el comercio.' });
   }
+
+  // Tanto en PUT como en DELETE:
+const idUsuarioToken = req.usuario.id || req.usuario.userId || req.usuario.commerceId;
+
+console.log(`[AUTH CHECK] Comercio ID: ${comercio.id} (${typeof comercio.id}) | Token ID: ${idUsuarioToken} (${typeof idUsuarioToken})`);
+
+const esPropietario = Number(comercio.id) === Number(idUsuarioToken);
+const esAdmin = Boolean(req.usuario.esAdmin);
+
+if (!esPropietario && !esAdmin) {
+  return res.status(403).json({ mensaje: 'No tenés permisos para esta acción.' });
+}
 });
 
 export default router;
