@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 export const verificarToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Extrae 'TOKEN' de 'Bearer TOKEN'
 
   if (!token) {
@@ -9,10 +9,22 @@ export const verificarToken = (req, res, next) => {
   }
 
   try {
-    const usuarioDecodificado = jwt.verify(token, process.env.JWT_SECRET || 'clave_secreta_jwt');
-    req.usuario = usuarioDecodificado; // Guardamos los datos del token en req.usuario
+    const usuarioDecodificado = jwt.verify(
+      token, 
+      process.env.JWT_SECRET || 'clave_secreta_jwt'
+    );
+    
+    // Guardamos los datos decodificados en req.usuario y req.user por compatibilidad
+    req.usuario = usuarioDecodificado; 
+    req.user = usuarioDecodificado;
+    
     next();
   } catch (error) {
-    return res.status(403).json({ mensaje: 'Token inválido o expirado.' });
+    // 🔍 Imprime la causa exacta en la terminal/logs de Render
+    console.error('Error al verificar JWT:', error.message);
+    return res.status(403).json({ 
+      mensaje: 'Token inválido o expirado.', 
+      error: error.message 
+    });
   }
 };
