@@ -8,34 +8,32 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // 🔑 CREDENCIALES FIJAS DE ADMIN
-  const ADMIN_EMAIL = 'admin@magazinelapunta.com';
-  const ADMIN_PASSWORD = '99885522';
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // 1. EVALUAMOS SI ES ACCESO SUPERADMIN
-    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
-      localStorage.setItem('token', 'token-admin-super-secreto');
-      localStorage.setItem('rol', 'admin');
-      navigate('/admin');
-      return;
-    }
-
-    // 2. SI NO ES ADMIN, INTENTA LOGUEAR UN COMERCIO CONTRA LA BD
     try {
+      // Petición unificada al Backend (Maneja tanto comercios como admin)
       const res = await API.post('/auth/login', {
         email,
         password
       });
 
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('rol', 'comercio');
-      localStorage.setItem('comercio', JSON.stringify(res.data.comercio));
+      const { token, comercio, esAdmin } = res.data;
 
-      navigate('/perfil');
+      // Guardamos el token JWT firmado correctamente por el Backend
+      localStorage.setItem('token', token);
+
+      if (esAdmin) {
+        localStorage.setItem('rol', 'admin');
+        navigate('/admin');
+      } else {
+        localStorage.setItem('rol', 'comercio');
+        if (comercio) {
+          localStorage.setItem('comercio', JSON.stringify(comercio));
+        }
+        navigate('/perfil');
+      }
     } catch (err) {
       setError(err.response?.data?.mensaje || 'Credenciales incorrectas o servidor no disponible.');
     }

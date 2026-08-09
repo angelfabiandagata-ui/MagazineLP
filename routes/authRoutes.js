@@ -6,7 +6,11 @@ import Commerce from '../models/Commerce.js';
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_magazine_la_punta_2026';
 
-// POST /api/auth/register (El que ya funciona)
+// 🔑 CREDENCIALES DEL SUPERADMIN
+const ADMIN_EMAIL = 'admin@magazinelapunta.com';
+const ADMIN_PASSWORD = '99885522';
+
+// POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, direccion, tel, rubro } = req.body;
@@ -43,35 +47,54 @@ router.post('/register', async (req, res) => {
   }
 });
 
-
-// 👈 POST /api/auth/login (AQUÍ ESTÁ LA RUTA QUE FALTABA)
+// POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Buscar si el comercio existe por email
+    if (!email || !password) {
+      return res.status(400).json({ mensaje: 'Por favor, ingresá email y contraseña.' });
+    }
+
+    // 1. VALIDACIÓN DE SUPERADMIN
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
+      const token = jwt.sign(
+        { id: 'admin', email: ADMIN_EMAIL, esAdmin: true },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      return res.status(200).json({
+        mensaje: 'Inicio de sesión como Administrador exitoso',
+        token,
+        esAdmin: true
+      });
+    }
+
+    // 2. BUSCAR COMERCIO EN BASE DE DATOS
     const comercio = await Commerce.findOne({ where: { email } });
     if (!comercio) {
       return res.status(400).json({ mensaje: 'Credenciales inválidas. El usuario no existe.' });
     }
 
-    // 2. Comparar la contraseña enviada con el hash guardado en DB
+    // 3. COMPARAR CONTRASEÑA
     const esValida = await bcrypt.compare(password, comercio.password);
     if (!esValida) {
       return res.status(400).json({ mensaje: 'Credenciales inválidas. Contraseña incorrecta.' });
     }
 
-    // 3. Generar token de autenticación JWT
+    // 4. GENERAR TOKEN PARA COMERCIO (esAdmin: false)
     const token = jwt.sign(
-      { id: comercio.id, email: comercio.email },
+      { id: comercio.id, email: comercio.email, esAdmin: false },
       JWT_SECRET,
-      { expiresIn: '7d' } // Válido por 7 días
+      { expiresIn: '7d' }
     );
 
-    // 4. Responder con los datos requeridos por el frontend
+    // 5. RESPONDER AL FRONTEND
     return res.status(200).json({
       mensaje: 'Inicio de sesión exitoso',
       token,
+      esAdmin: false,
       comercio: {
         id: comercio.id,
         name: comercio.name,
