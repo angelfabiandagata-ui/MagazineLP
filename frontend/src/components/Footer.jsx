@@ -34,7 +34,7 @@ export default function Footer() {
               <Link to="/login" className="hover:text-amber-400 transition-colors">Mi Cuenta / Iniciar Sesión</Link>
             </li>
             <li>
-              <Link to="/registro" className="hover:text-amber-400 transition-colors">Sumar mi Comercio</Link>
+              <Link to="/contacto" className="hover:text-amber-400 transition-colors">Sumar mi Comercio</Link>
             </li>
           </ul>
         </div>
@@ -64,7 +64,7 @@ export default function Footer() {
           </h4>
           <p className="text-sm mb-2">La Punta, San Luis, Argentina</p>
           <a 
-            href="https://wa.me/5492660000000" 
+            href="https://wa.me/5492664759571" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="inline-block text-sm text-amber-400 hover:underline font-semibold mt-1"

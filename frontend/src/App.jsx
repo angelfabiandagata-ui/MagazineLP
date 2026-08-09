@@ -12,6 +12,9 @@ import Busqueda from './pages/Busqueda';
 import Turismo from './pages/Turismo';
 import Contacto from './pages/Contacto';
 import Login from './pages/Login';
+import Terminos from './pages/Terminos';
+import Privacidad from './pages/Privacidad';
+import PreguntasFrecuentes from './pages/PreguntasFrecuentes';
 
 // Páginas Privadas (Comercio / Admin)
 import Perfil from './pages/Perfil';
@@ -37,6 +40,9 @@ export default function App() {
             <Route path="/turismo" element={<Turismo />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/terminos" element={<Terminos />} />
+            <Route path="/privacidad" element={<Privacidad />} />
+            <Route path="/preguntas-frecuentes" element={<PreguntasFrecuentes />} />
 
             {/* 🏪 RUTA DE PERFIL */}
             <Route 
