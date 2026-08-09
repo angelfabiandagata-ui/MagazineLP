@@ -62,9 +62,8 @@ router.put('/:id', verificarToken, (req, res, next) => {
       return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
     }
 
-    // --- AUTORIZACIÓN DIRECTA (1 Comercio = 1 Usuario) ---
-    // El id del comercio coincide directamente con el id guardado en req.usuario
-    const esPropietario = Number(comercio.id) === Number(req.usuario.id);
+    // --- AUTORIZACIÓN DIRECTA (Comparación estricta usando String) ---
+    const esPropietario = String(comercio.id) === String(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
     if (!esPropietario && !esAdmin) {
@@ -135,14 +134,6 @@ router.put('/:id', verificarToken, (req, res, next) => {
     console.error('Error al actualizar comercio:', error);
     return res.status(500).json({ mensaje: 'Error al procesar los datos.' });
   }
-
-  // --- AUTORIZACIÓN DIRECTA (Comparación estricta en String) ---
-    const esPropietario = String(comercio.id) === String(req.usuario.id);
-    const esAdmin = Boolean(req.usuario.esAdmin);
-
-    if (!esPropietario && !esAdmin) {
-      return res.status(403).json({ mensaje: 'No tenés permisos para modificar este comercio.' });
-}
 });
 
 // DELETE /api/comercios/:id (Protegido)
@@ -153,8 +144,8 @@ router.delete('/:id', verificarToken, async (req, res) => {
 
     if (!comercio) return res.status(404).json({ mensaje: 'El comercio no existe.' });
 
-    // --- AUTORIZACIÓN DIRECTA ---
-    const esPropietario = Number(comercio.id) === Number(req.usuario.id);
+    // --- AUTORIZACIÓN DIRECTA (Comparación estricta usando String) ---
+    const esPropietario = String(comercio.id) === String(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
     if (!esPropietario && !esAdmin) {
@@ -167,14 +158,6 @@ router.delete('/:id', verificarToken, async (req, res) => {
     console.error('Error al eliminar comercio:', error);
     return res.status(500).json({ mensaje: 'Error al intentar eliminar el comercio.' });
   }
-
-  // --- AUTORIZACIÓN DIRECTA (Comparación estricta en String) ---
-    const esPropietario = String(comercio.id) === String(req.usuario.id);
-    const esAdmin = Boolean(req.usuario.esAdmin);
-
-    if (!esPropietario && !esAdmin) {
-      return res.status(403).json({ mensaje: 'No tenés permisos para modificar este comercio.' });
-    }
 });
 
 export default router;
