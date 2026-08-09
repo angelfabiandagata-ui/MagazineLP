@@ -1,4 +1,5 @@
 import express from 'express';
+import { v2 as cloudinary } from 'cloudinary';
 import Commerce from '../models/Commerce.js';
 import Label from '../models/Label.js';
 import Image from '../models/Image.js';
@@ -62,7 +63,7 @@ router.put('/:id', verificarToken, (req, res, next) => {
       return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
     }
 
-    // --- AUTORIZACIÓN DIRECTA (Comparación estricta usando String) ---
+    // --- AUTORIZACIÓN DIRECTA ---
     const esPropietario = String(comercio.id) === String(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
@@ -70,14 +71,21 @@ router.put('/:id', verificarToken, (req, res, next) => {
       return res.status(403).json({ mensaje: 'No tenés permisos para modificar este comercio.' });
     }
 
-    const { name, description, direccion, tel, rubro, labels, instagram, whatsapp, paginaWeb } = req.body;
+    const { name, description, direccion, tel, rubro, labels, instagram, whatsapp, paginaWeb, ubicacion } = req.body;
 
     comercio.name = name || comercio.name;
     comercio.description = description !== undefined ? description : comercio.description;
     comercio.direccion = direccion !== undefined ? direccion : comercio.direccion;
     comercio.tel = tel !== undefined ? tel : comercio.tel;
     comercio.rubro = rubro !== undefined ? rubro : comercio.rubro;
-    comercio.redSocial = { instagram, whatsapp, paginaWeb };
+    
+    // Guardamos la nueva propiedad 'ubicacion' en el JSON redSocial
+    comercio.redSocial = { 
+      instagram, 
+      whatsapp, 
+      paginaWeb, 
+      ubicacion: ubicacion !== undefined ? ubicacion : comercio.redSocial?.ubicacion 
+    };
     await comercio.save();
 
     const procesarImagenPorPuesto = async (fileArray, tipoPuesto) => {
@@ -136,6 +144,51 @@ router.put('/:id', verificarToken, (req, res, next) => {
   }
 });
 
+// DELETE /api/comercios/:id/imagen/:tipo (Protegido - Borra de DB y Cloudinary)
+router.delete('/:id/imagen/:tipo', verificarToken, async (req, res) => {
+  try {
+    const { id, tipo } = req.params;
+    const comercio = await Commerce.findByPk(id);
+
+    if (!comercio) return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
+
+    // Autorización
+    const esPropietario = String(comercio.id) === String(req.usuario.id);
+    const esAdmin = Boolean(req.usuario.esAdmin);
+
+    if (!esPropietario && !esAdmin) {
+      return res.status(403).json({ mensaje: 'No tenés permisos para modificar este comercio.' });
+    }
+
+    const imagen = await Image.findOne({ 
+      where: { commerceId: id, tipo: tipo.toUpperCase() } 
+    });
+
+    if (imagen) {
+      // Intentar borrar el archivo en Cloudinary si es una URL de Cloudinary
+      if (imagen.url && imagen.url.includes('cloudinary.com')) {
+        try {
+          const parts = imagen.url.split('/');
+          const fileName = parts.pop().split('.')[0];
+          const folder = parts.pop();
+          const publicId = `${folder}/${fileName}`;
+
+          await cloudinary.uploader.destroy(publicId);
+        } catch (cErr) {
+          console.error('Error al borrar imagen de Cloudinary:', cErr);
+        }
+      }
+
+      await imagen.destroy();
+    }
+
+    return res.status(200).json({ mensaje: `Imagen ${tipo} eliminada correctamente.` });
+  } catch (error) {
+    console.error('Error al eliminar la imagen:', error);
+    return res.status(500).json({ mensaje: 'Error interno al intentar eliminar la imagen.' });
+  }
+});
+
 // DELETE /api/comercios/:id (Protegido)
 router.delete('/:id', verificarToken, async (req, res) => {
   try {
@@ -144,7 +197,7 @@ router.delete('/:id', verificarToken, async (req, res) => {
 
     if (!comercio) return res.status(404).json({ mensaje: 'El comercio no existe.' });
 
-    // --- AUTORIZACIÓN DIRECTA (Comparación estricta usando String) ---
+    // --- AUTORIZACIÓN DIRECTA ---
     const esPropietario = String(comercio.id) === String(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 

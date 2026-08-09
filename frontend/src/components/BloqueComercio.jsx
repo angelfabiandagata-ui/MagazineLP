@@ -37,6 +37,12 @@ export default function BloqueComercio({ comercio }) {
   const rawWeb = comercio?.redSocial?.paginaWeb || '';
   const urlWeb = rawWeb ? (rawWeb.startsWith('http') ? rawWeb : `https://${rawWeb}`) : null;
 
+  // 📍 Procesar enlace de Google Maps
+  const rawUbicacion = comercio?.redSocial?.ubicacion || '';
+  const urlUbicacion = rawUbicacion 
+    ? (rawUbicacion.startsWith('http') ? rawUbicacion : `https://${rawUbicacion}`) 
+    : null;
+
   return (
     <div 
       className="scroll-area relative w-full min-h-screen md:h-screen bg-cover bg-center flex flex-col justify-between p-4 sm:p-6 md:p-8 text-white"
@@ -89,6 +95,12 @@ export default function BloqueComercio({ comercio }) {
         </div>
 
         <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full sm:w-auto justify-start sm:justify-end border-t sm:border-t-0 border-white/10 pt-2 sm:pt-0">
+          {urlUbicacion && (
+            <a href={urlUbicacion} target="_blank" rel="noreferrer" className="text-red-400 font-semibold hover:underline flex items-center gap-1">
+              📍 Cómo llegar
+            </a>
+          )}
+
           {urlInstagram && (
             <a href={urlInstagram} target="_blank" rel="noreferrer" className="text-pink-400 font-semibold hover:underline">
               Instagram

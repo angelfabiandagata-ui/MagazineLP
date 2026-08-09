@@ -23,25 +23,24 @@ export default function Perfil() {
     rubro: '',
     instagram: '',
     whatsapp: '',
-    paginaWeb: ''
+    paginaWeb: '',
+    ubicacion: '' // 📍 Nuevo campo para Google Maps
   });
 
-  // Base URL para resolver estáticos (imágenes viejas) apuntando al backend real
+  // Base URL para resolver estáticos
   const API_URL = import.meta.env.VITE_API_URL || 'https://magazinelp.onrender.com/api';
   const BACKEND_URL = API_URL.replace('/api', '');
 
-  // Helper seguro para resolver la URL de la imagen
+  // Helper para resolver la URL de la imagen
   const getImagenUrl = (tipo) => {
     if (comercio && comercio.images && Array.isArray(comercio.images)) {
       const img = comercio.images.find((i) => i.tipo === tipo);
       if (!img || !img.url) return null;
 
-      // 1. Si es una URL completa (Cloudinary), se devuelve intacta
       if (img.url.startsWith('http://') || img.url.startsWith('https://')) {
         return img.url;
       }
 
-      // 2. Si es una ruta relativa (/uploads/...), se le adosa la dirección del backend
       return `${BACKEND_URL}${img.url.startsWith('/') ? '' : '/'}${img.url}`;
     }
     return null;
@@ -57,11 +56,9 @@ export default function Perfil() {
     }
 
     const comLocal = JSON.parse(datosComercio);
-
-    // 1. Cargar estado básico con localStorage
     setComercio(comLocal);
 
-    // 2. Pedir información actualizada al backend
+    // Cargar información actualizada del servidor
     API.get(`/comercios/${comLocal.id}`)
       .then((res) => {
         const comDB = res.data;
@@ -69,7 +66,6 @@ export default function Perfil() {
         setComercio(comDB);
         localStorage.setItem('comercio', JSON.stringify(comDB));
 
-        // Actualizar inputs del formulario
         setFormData({
           name: comDB.name || '',
           description: comDB.description || '',
@@ -78,10 +74,10 @@ export default function Perfil() {
           rubro: comDB.rubro || '',
           instagram: comDB.redSocial?.instagram || '',
           whatsapp: comDB.redSocial?.whatsapp || '',
-          paginaWeb: comDB.redSocial?.paginaWeb || ''
+          paginaWeb: comDB.redSocial?.paginaWeb || '',
+          ubicacion: comDB.redSocial?.ubicacion || ''
         });
 
-        // Sincronizar etiquetas
         const listaLabels = comDB.Labels || comDB.labels || [];
         const etiquetasLimpia = listaLabels.map((lbl) => 
           typeof lbl === 'object' ? (lbl.label || lbl.name) : lbl
@@ -92,7 +88,6 @@ export default function Perfil() {
       .catch((err) => {
         console.error('Error al sincronizar comercio con el servidor:', err);
         
-        // Fallback usando localStorage
         setFormData({
           name: comLocal.name || '',
           description: comLocal.description || '',
@@ -101,7 +96,8 @@ export default function Perfil() {
           rubro: comLocal.rubro || '',
           instagram: comLocal.redSocial?.instagram || '',
           whatsapp: comLocal.redSocial?.whatsapp || '',
-          paginaWeb: comLocal.redSocial?.paginaWeb || ''
+          paginaWeb: comLocal.redSocial?.paginaWeb || '',
+          ubicacion: comLocal.redSocial?.ubicacion || ''
         });
 
         const listaLabelsLocal = comLocal.Labels || comLocal.labels || [];
@@ -117,7 +113,31 @@ export default function Perfil() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- LÓGICA DE ETIQUETAS ---
+  // --- ELIMINAR IMAGEN DESDE LA API ---
+  const handleEliminarImagen = async (tipoPuesto) => {
+    if (!window.confirm(`¿Seguro que querés eliminar esta imagen?`)) return;
+
+    try {
+      await API.delete(`/comercios/${comercio.id}/imagen/${tipoPuesto}`);
+      
+      // Actualizamos el estado local removiendo la imagen
+      const imagenesFiltradas = comercio.images.filter((i) => i.tipo !== tipoPuesto);
+      const comercioActualizado = { ...comercio, images: imagenesFiltradas };
+      
+      setComercio(comercioActualizado);
+      localStorage.setItem('comercio', JSON.stringify(comercioActualizado));
+
+      setMensaje({ tipo: 'exito', texto: 'Imagen eliminada correctamente.' });
+    } catch (err) {
+      console.error('Error al borrar imagen:', err);
+      setMensaje({ 
+        tipo: 'error', 
+        texto: err.response?.data?.mensaje || 'Error al eliminar la imagen.' 
+      });
+    }
+  };
+
+  // --- ETIQUETAS ---
   const handleAgregarLabel = (e) => {
     e.preventDefault();
     const textoLimpio = nuevaLabel.trim().toLowerCase().replace('#', '');
@@ -147,8 +167,9 @@ export default function Perfil() {
       data.append('rubro', formData.rubro);
       data.append('instagram', formData.instagram);
       data.append('whatsapp', formData.whatsapp);
-      data.append('labels', JSON.stringify(labels));
       data.append('paginaWeb', formData.paginaWeb);
+      data.append('ubicacion', formData.ubicacion);
+      data.append('labels', JSON.stringify(labels));
 
       if (archivoFondo) data.append('imagenFondo', archivoFondo);
       if (archivoPromo1) data.append('promo1', archivoPromo1);
@@ -158,13 +179,11 @@ export default function Perfil() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // Se contempla si el backend responde { comercio: {...} } o directo {...}
       const comercioActualizado = res.data.comercio || res.data;
 
       localStorage.setItem('comercio', JSON.stringify(comercioActualizado));
       setComercio(comercioActualizado);
 
-      // Limpiamos los archivos seleccionados de los inputs
       setArchivoFondo(null);
       setArchivoPromo1(null);
       setArchivoPromo2(null);
@@ -196,7 +215,7 @@ export default function Perfil() {
         <div className="flex flex-wrap justify-between items-center mb-8 border-b border-slate-700 pb-4">
           <div>
             <h1 className="text-3xl font-extrabold uppercase text-amber-400">Panel de Control</h1>
-            <p className="text-gray-400 text-sm">Administrá tu espacio, imágenes y etiquetas en Magazine La Punta</p>
+            <p className="text-gray-400 text-sm">Administrá tu espacio, imágenes y enlaces de Magazine La Punta</p>
           </div>
           <button
             onClick={handleLogout}
@@ -219,7 +238,7 @@ export default function Perfil() {
 
         <form onSubmit={handleGuardar} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {/* Columna Principal: Datos Generales y Labels */}
+          {/* Columna Principal: Datos Generales */}
           <div className="md:col-span-2 bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col gap-4 shadow-xl">
             <h2 className="text-xl font-bold text-gray-200 border-b border-slate-700 pb-2">Información del Comercio</h2>
 
@@ -275,7 +294,7 @@ export default function Perfil() {
                 Etiquetas de Búsqueda (Labels)
               </label>
               <p className="text-xs text-gray-400 mb-3">
-                Agregá palabras clave por las que los vecinos te puedan encontrar (ej: <i>medialunas</i>, <i>delivery</i>, <i>cerveza</i>).
+                Agregá palabras clave por las que los vecinos te puedan encontrar (ej: <i>medialunas</i>, <i>delivery</i>).
               </p>
 
               <div className="flex gap-2 mb-4">
@@ -289,7 +308,7 @@ export default function Perfil() {
                       handleAgregarLabel(e);
                     }
                   }}
-                  placeholder="Escribí una etiqueta y presioná Enter o Agregar"
+                  placeholder="Escribí una etiqueta y presioná Enter"
                   className="flex-1 py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-amber-400"
                 />
                 <button
@@ -303,19 +322,18 @@ export default function Perfil() {
 
               <div className="flex flex-wrap gap-2 min-h-[40px] p-3 rounded-xl bg-slate-900/50 border border-slate-700/50">
                 {labels.length === 0 ? (
-                  <span className="text-xs text-gray-500 italic">No hay etiquetas cargadas. ¡Agregá algunas!</span>
+                  <span className="text-xs text-gray-500 italic">No hay etiquetas cargadas.</span>
                 ) : (
                   labels.map((lbl, index) => (
                     <span
                       key={index}
-                      className="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-2 transition-all hover:border-amber-400"
+                      className="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-2"
                     >
                       #{lbl}
                       <button
                         type="button"
                         onClick={() => handleEliminarLabel(lbl)}
                         className="text-gray-400 hover:text-red-400 font-bold text-sm leading-none ml-1 transition-colors"
-                        title="Eliminar etiqueta"
                       >
                         ×
                       </button>
@@ -345,13 +363,23 @@ export default function Perfil() {
                 
                 {/* Imagen de Fondo */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-300 mb-1">Imagen de Fondo (100vh)</label>
+                  <label className="block text-xs font-bold text-gray-300 mb-1">Imagen de Fondo</label>
                   {getImagenUrl('FONDO') && (
-                    <img
-                      src={getImagenUrl('FONDO')}
-                      alt="Fondo actual"
-                      className="w-full h-24 object-cover rounded-xl mb-2 border border-amber-500/40"
-                    />
+                    <div className="relative mb-2">
+                      <img
+                        src={getImagenUrl('FONDO')}
+                        alt="Fondo actual"
+                        className="w-full h-24 object-cover rounded-xl border border-amber-500/40"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleEliminarImagen('FONDO')}
+                        className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow"
+                        title="Eliminar imagen de fondo"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   )}
                   <input
                     type="file"
@@ -370,11 +398,21 @@ export default function Perfil() {
                     <div>
                       <span className="text-[11px] text-gray-400 block mb-1">Promo 1:</span>
                       {getImagenUrl('PROMO_1') && (
-                        <img
-                          src={getImagenUrl('PROMO_1')}
-                          alt="Promo 1 actual"
-                          className="w-full h-20 object-cover rounded-lg mb-2 border border-slate-700"
-                        />
+                        <div className="relative mb-2">
+                          <img
+                            src={getImagenUrl('PROMO_1')}
+                            alt="Promo 1 actual"
+                            className="w-full h-20 object-cover rounded-lg border border-slate-700"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarImagen('PROMO_1')}
+                            className="absolute top-1.5 right-1.5 bg-red-600/90 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow"
+                            title="Eliminar Promo 1"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       )}
                       <input
                         type="file"
@@ -388,11 +426,21 @@ export default function Perfil() {
                     <div>
                       <span className="text-[11px] text-gray-400 block mb-1">Promo 2:</span>
                       {getImagenUrl('PROMO_2') && (
-                        <img
-                          src={getImagenUrl('PROMO_2')}
-                          alt="Promo 2 actual"
-                          className="w-full h-20 object-cover rounded-lg mb-2 border border-slate-700"
-                        />
+                        <div className="relative mb-2">
+                          <img
+                            src={getImagenUrl('PROMO_2')}
+                            alt="Promo 2 actual"
+                            className="w-full h-20 object-cover rounded-lg border border-slate-700"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarImagen('PROMO_2')}
+                            className="absolute top-1.5 right-1.5 bg-red-600/90 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow"
+                            title="Eliminar Promo 2"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       )}
                       <input
                         type="file"
@@ -407,9 +455,9 @@ export default function Perfil() {
               </div>
             </div>
 
-            {/* REDES SOCIALES */}
+            {/* REDES SOCIALES Y ENLACES */}
             <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-              <h2 className="text-lg font-bold mb-4 text-gray-200 border-b border-slate-700 pb-2">Redes Sociales</h2>
+              <h2 className="text-lg font-bold mb-4 text-gray-200 border-b border-slate-700 pb-2">Redes Sociales y Mapa</h2>
 
               <div className="flex flex-col gap-4">
                 <div>
@@ -443,7 +491,22 @@ export default function Perfil() {
                     name="paginaWeb"
                     value={formData.paginaWeb}
                     onChange={handleChange}
-                    placeholder="Ej: www.micomercio.com"
+                    placeholder="ej: www.micomercio.com"
+                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                {/* 📍 NUEVO CAMPO DE UBICACIÓN */}
+                <div>
+                  <label className="block text-xs font-bold uppercase text-amber-400 mb-1">
+                    📍 Ubicación (Enlace de Google Maps)
+                  </label>
+                  <input
+                    type="url"
+                    name="ubicacion"
+                    value={formData.ubicacion}
+                    onChange={handleChange}
+                    placeholder="https://maps.app.goo.gl/..."
                     className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400"
                   />
                 </div>
