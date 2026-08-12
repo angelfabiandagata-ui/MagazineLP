@@ -45,7 +45,7 @@ export default function BloqueComercio({ comercio }) {
 
   return (
     <div 
-      className="scroll-area relative w-full min-h-screen md:h-screen bg-cover bg-center flex flex-col justify-between p-4 sm:p-6 md:p-8 text-white"
+      className="scroll-area relative w-full min-h-screen bg-cover bg-center flex flex-col justify-between p-4 sm:p-6 md:p-8 text-white"
       style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('${imgFondo}')` }}
     >
       {/* Encabezado: Título y Etiquetas */}
@@ -72,16 +72,24 @@ export default function BloqueComercio({ comercio }) {
           </p>
         </div>
 
-        {/* Galería de Promociones */}
-        <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
+        {/* Galería de Promociones (Ajustada para no recortar la imagen) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 w-full">
           {imgPromo1 && (
-            <div className="h-24 sm:h-28 bg-white/10 rounded-lg overflow-hidden border border-white/20">
-              <img src={imgPromo1} alt="Promo 1" className="w-full h-full object-cover" />
+            <div className="w-full h-auto max-h-48 sm:max-h-56 bg-black/40 rounded-lg overflow-hidden border border-white/20 flex items-center justify-center p-1">
+              <img 
+                src={imgPromo1} 
+                alt="Promo 1" 
+                className="w-full h-full object-contain rounded-lg" 
+              />
             </div>
           )}
           {imgPromo2 && (
-            <div className="h-24 sm:h-28 bg-white/10 rounded-lg overflow-hidden border border-white/20">
-              <img src={imgPromo2} alt="Promo 2" className="w-full h-full object-cover" />
+            <div className="w-full h-auto max-h-48 sm:max-h-56 bg-black/40 rounded-lg overflow-hidden border border-white/20 flex items-center justify-center p-1">
+              <img 
+                src={imgPromo2} 
+                alt="Promo 2" 
+                className="w-full h-full object-contain rounded-lg" 
+              />
             </div>
           )}
         </div>
