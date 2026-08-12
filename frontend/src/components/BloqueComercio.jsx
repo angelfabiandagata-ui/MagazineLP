@@ -9,11 +9,9 @@ export default function BloqueComercio({ comercio }) {
 
   const fallbackFondo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'><rect width='100%' height='100%' fill='%230f172a'/><text x='50%' y='50%' fill='%23334155' text-anchor='middle' font-family='sans-serif' font-size='48'>Magazine La Punta</text></svg>";
 
-  // Dominio base estricto del backend de Express para estáticos
   const API_URL = import.meta.env.VITE_API_URL || 'https://magazinelp.onrender.com/api';
   const BACKEND_URL = API_URL.replace('/api', '');
 
-  // Helper seguro para resolver la URL de la imagen
   const resolverImagen = (objImg) => {
     if (!objImg || !objImg.url) return null;
     if (objImg.url.startsWith('http')) return objImg.url;
@@ -37,7 +35,6 @@ export default function BloqueComercio({ comercio }) {
   const rawWeb = comercio?.redSocial?.paginaWeb || '';
   const urlWeb = rawWeb ? (rawWeb.startsWith('http') ? rawWeb : `https://${rawWeb}`) : null;
 
-  // 📍 Procesar enlace de Google Maps
   const rawUbicacion = comercio?.redSocial?.ubicacion || '';
   const urlUbicacion = rawUbicacion 
     ? (rawUbicacion.startsWith('http') ? rawUbicacion : `https://${rawUbicacion}`) 
@@ -72,10 +69,10 @@ export default function BloqueComercio({ comercio }) {
           </p>
         </div>
 
-        {/* Galería de Promociones (Ajustada para no recortar la imagen) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 w-full">
+        {/* Galería de Promociones (Contenedor más angosto y compacto) */}
+        <div className="flex flex-col sm:flex-row md:flex-col items-center justify-center gap-3 w-full justify-self-center">
           {imgPromo1 && (
-            <div className="w-full h-auto max-h-48 sm:max-h-56 bg-black/40 rounded-lg overflow-hidden border border-white/20 flex items-center justify-center p-1">
+            <div className="w-full max-w-[240px] sm:max-w-[200px] md:max-w-[220px] h-28 sm:h-32 md:h-36 bg-black/40 backdrop-blur-sm rounded-xl border border-white/20 p-2 flex items-center justify-center overflow-hidden shadow-lg">
               <img 
                 src={imgPromo1} 
                 alt="Promo 1" 
@@ -84,7 +81,7 @@ export default function BloqueComercio({ comercio }) {
             </div>
           )}
           {imgPromo2 && (
-            <div className="w-full h-auto max-h-48 sm:max-h-56 bg-black/40 rounded-lg overflow-hidden border border-white/20 flex items-center justify-center p-1">
+            <div className="w-full max-w-[240px] sm:max-w-[200px] md:max-w-[220px] h-28 sm:h-32 md:h-36 bg-black/40 backdrop-blur-sm rounded-xl border border-white/20 p-2 flex items-center justify-center overflow-hidden shadow-lg">
               <img 
                 src={imgPromo2} 
                 alt="Promo 2" 
