@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import API from '../api';
 import BloqueComercio from '../components/BloqueComercio';
 import BloqueNoticias from '../components/BloqueNoticias';
+import Footer from '../components/Footer';
 
 // Helper seguro para ordenar aleatoriamente la lista de comercios
 const mezclarArray = (array) => {
@@ -16,7 +17,6 @@ export default function Inicio() {
   useEffect(() => {
     API.get('/comercios')
       .then(res => {
-        // Validamos si la respuesta es directo un Array o viene dentro de una propiedad
         let datos = [];
         if (Array.isArray(res.data)) {
           datos = res.data;
@@ -29,7 +29,7 @@ export default function Inicio() {
       })
       .catch(err => {
         console.error("Error al cargar comercios:", err);
-        setComercios([]); // Fallback seguro a Array vacío
+        setComercios([]);
       })
       .finally(() => {
         setCargando(false);
@@ -87,6 +87,9 @@ export default function Inicio() {
           <BloqueComercio key={comercio.id} comercio={comercio} />
         ))
       )}
+
+      {/* 4. ÚLTIMO BLOQUE: FOOTER */}
+      <Footer />
 
     </div>
   );

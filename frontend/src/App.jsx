@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Componentes de Layout
 import Navbar from './components/Navbar';
-import Footer from './components/Footer'; // 👈 Importamos el Footer
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Páginas Públicas
