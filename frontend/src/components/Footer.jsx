@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function BloqueFooter() {
+export default function Footer() {
   const anioActual = new Date().getFullYear();
 
   return (
