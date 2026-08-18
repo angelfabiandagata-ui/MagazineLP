@@ -26,11 +26,9 @@ import GestionTurismo from './pages/GestionTurismo';
 export default function App() {
   return (
     <BrowserRouter>
-      {/* Contenedor principal flex para empujar el footer siempre al fondo */}
       <div className="min-h-screen flex flex-col bg-slate-900 text-white">
         <Navbar />
 
-        {/* El tag main ocupa el espacio disponible entre Navbar y Footer */}
         <main className="flex-grow">
           <Routes>
             {/* 🟢 RUTAS PÚBLICAS */}
@@ -97,8 +95,6 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-
-        <Footer /> {/* 👈 El Footer renderizado en la raíz */}
       </div>
     </BrowserRouter>
   );
