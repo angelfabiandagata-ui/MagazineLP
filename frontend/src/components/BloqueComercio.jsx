@@ -42,17 +42,17 @@ export default function BloqueComercio({ comercio }) {
 
   return (
     <div 
-      className="scroll-area relative w-full min-h-screen bg-cover bg-center flex flex-col justify-between p-4 sm:p-6 md:p-8 text-white"
+      className="scroll-area relative w-full h-[100dvh] bg-cover bg-center flex flex-col justify-between p-3 sm:p-6 md:p-8 text-white box-border overflow-hidden"
       style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('${imgFondo}')` }}
     >
       {/* Encabezado: Título y Etiquetas */}
       <div className="pt-14 sm:pt-16">
-        <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-wide uppercase break-words">
+        <h2 className="text-2xl sm:text-5xl md:text-6xl font-extrabold tracking-wide uppercase break-words leading-tight">
           {comercio?.name}
         </h2>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
+        <div className="flex flex-wrap gap-1 sm:gap-2 mt-1.5 sm:mt-2">
           {listaLabels.map((l, index) => (
-            <span key={index} className="bg-blue-600/80 text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full text-white">
+            <span key={index} className="bg-blue-600/80 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full text-white">
               #{typeof l === 'object' ? (l.label || l.name) : l}
             </span>
           ))}
@@ -60,32 +60,32 @@ export default function BloqueComercio({ comercio }) {
       </div>
 
       {/* Bloque Medio: Sobre Nosotros y Promociones */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 items-center my-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-6 items-center my-auto">
         {/* Descripción */}
-        <div className="md:col-span-2 bg-black/50 backdrop-blur-md p-4 sm:p-6 rounded-xl border border-white/10">
-          <h3 className="text-lg sm:text-xl font-bold mb-1.5 sm:mb-2 text-blue-400">Sobre Nosotros</h3>
-          <p className="text-gray-200 text-xs sm:text-sm md:text-base leading-relaxed max-h-36 overflow-y-auto sm:max-h-none">
+        <div className="md:col-span-2 bg-black/50 backdrop-blur-md p-3 sm:p-6 rounded-xl border border-white/10">
+          <h3 className="text-sm sm:text-xl font-bold mb-1 sm:mb-2 text-blue-400">Sobre Nosotros</h3>
+          <p className="text-gray-200 text-xs sm:text-sm md:text-base leading-relaxed max-h-24 sm:max-h-36 overflow-y-auto">
             {comercio?.description || 'Sin descripción disponible por el momento.'}
           </p>
         </div>
 
-        {/* Galería de Promociones (Contenedor más angosto y compacto) */}
-        <div className="flex flex-col sm:flex-row md:flex-col items-center justify-center gap-3 w-full justify-self-center">
+        {/* Galería de Promociones */}
+        <div className="flex flex-row md:flex-col items-center justify-center gap-2 sm:gap-3 w-full justify-self-center">
           {imgPromo1 && (
-            <div className="w-full max-w-[240px] sm:max-w-[200px] md:max-w-[220px] h-28 sm:h-32 md:h-36 bg-black/40 backdrop-blur-sm rounded-xl border border-white/20 p-2 flex items-center justify-center overflow-hidden shadow-lg">
+            <div className="w-full max-w-[140px] sm:max-w-[200px] md:max-w-[220px] h-20 sm:h-28 md:h-36 bg-black/40 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/20 p-1 sm:p-2 flex items-center justify-center overflow-hidden shadow-lg">
               <img 
                 src={imgPromo1} 
                 alt="Promo 1" 
-                className="w-full h-full object-contain rounded-lg" 
+                className="w-full h-full object-contain rounded-md sm:rounded-lg" 
               />
             </div>
           )}
           {imgPromo2 && (
-            <div className="w-full max-w-[240px] sm:max-w-[200px] md:max-w-[220px] h-28 sm:h-32 md:h-36 bg-black/40 backdrop-blur-sm rounded-xl border border-white/20 p-2 flex items-center justify-center overflow-hidden shadow-lg">
+            <div className="w-full max-w-[140px] sm:max-w-[200px] md:max-w-[220px] h-20 sm:h-28 md:h-36 bg-black/40 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/20 p-1 sm:p-2 flex items-center justify-center overflow-hidden shadow-lg">
               <img 
                 src={imgPromo2} 
                 alt="Promo 2" 
-                className="w-full h-full object-contain rounded-lg" 
+                className="w-full h-full object-contain rounded-md sm:rounded-lg" 
               />
             </div>
           )}
@@ -93,13 +93,13 @@ export default function BloqueComercio({ comercio }) {
       </div>
 
       {/* Pie del Bloque: Ubicación y Redes */}
-      <div className="bg-black/70 backdrop-blur-md p-3.5 sm:p-4 rounded-xl border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs sm:text-sm">
+      <div className="bg-black/70 backdrop-blur-md p-2.5 sm:p-4 rounded-xl border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 text-[11px] sm:text-sm mb-1 sm:mb-0">
         <div className="space-y-0.5">
-          <p className="truncate">📍 {comercio?.direccion || 'La Punta, San Luis'}</p>
+          <p className="truncate max-w-[260px] sm:max-w-none">📍 {comercio?.direccion || 'La Punta, San Luis'}</p>
           <p>📞 {comercio?.tel || 'Sin teléfono de contacto'}</p>
         </div>
 
-        <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full sm:w-auto justify-start sm:justify-end border-t sm:border-t-0 border-white/10 pt-2 sm:pt-0">
+        <div className="flex flex-wrap gap-2.5 sm:gap-4 items-center w-full sm:w-auto justify-start sm:justify-end border-t sm:border-t-0 border-white/10 pt-1.5 sm:pt-0">
           {urlUbicacion && (
             <a href={urlUbicacion} target="_blank" rel="noreferrer" className="text-red-400 font-semibold hover:underline flex items-center gap-1">
               📍 Cómo llegar

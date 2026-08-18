@@ -10,7 +10,6 @@ export default function Busqueda() {
   useEffect(() => {
     API.get('/comercios')
       .then((res) => {
-        // 1. Desestructuración segura para evitar "e.filter is not a function"
         let datos = [];
         if (Array.isArray(res.data)) {
           datos = res.data;
@@ -22,24 +21,22 @@ export default function Busqueda() {
       })
       .catch((err) => {
         console.error('Error al obtener comercios para búsqueda:', err);
-        setComercios([]); // Fallback a arreglo vacío
+        setComercios([]);
       })
       .finally(() => {
         setCargando(false);
       });
   }, []);
 
-  // 2. Filtro seguro de búsqueda (Insensible a mayúsculas/minúsculas y tolerante a nulls)
   const termino = busqueda.trim().toLowerCase();
 
   const comerciosFiltrados = comercios.filter((comercio) => {
-    if (!termino) return true; // Si no hay búsqueda, muestra todos
+    if (!termino) return true;
 
     const nombre = (comercio.name || '').toLowerCase();
     const descripcion = (comercio.description || '').toLowerCase();
     const rubro = (comercio.rubro || '').toLowerCase();
 
-    // Extraer labels limpias tolerando objetos o strings
     const listaLabels = comercio.Labels || comercio.labels || [];
     const etiquetasStr = listaLabels
       .map((lbl) => (typeof lbl === 'object' ? lbl.label || lbl.name : lbl))
@@ -66,7 +63,7 @@ export default function Busqueda() {
   }
 
   return (
-    <div className="bg-slate-900 min-h-screen text-white pt-24 pb-12">
+    <div className="bg-slate-900 min-h-screen text-white pt-24">
       
       {/* BARRA DE BÚSQUEDA Y CABECERA */}
       <div className="max-w-4xl mx-auto px-6 mb-8 text-center">
@@ -107,7 +104,7 @@ export default function Busqueda() {
               No se encontraron resultados para "{busqueda}"
             </p>
             <p className="text-xs text-gray-500">
-              Proba buscando palabras más generales como "rotisería", "ropa" o "servicio".
+              Probá buscando palabras más generales como "rotisería", "ropa" o "servicio".
             </p>
           </div>
         ) : (
