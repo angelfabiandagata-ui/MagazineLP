@@ -3,54 +3,38 @@ import API from '../api';
 
 export default function Turismo() {
   const [atractivos, setAtractivos] = useState([]);
-
-  const atractivosFallback = [
-    {
-      id: 1,
-      titulo: "Réplica del Cabildo Histórico de 1810",
-      categoria: "Patrimonio",
-      ubicacion: "Av. Serrana s/n",
-      resumen: "Monumento histórico nacional a escala real que recrea el edificio de la Revolución de Mayo con muestras interactivas y visitas guiadas.",
-      imagen: "https://agenciasanluis.com/wp-content/uploads/2018/04/CABILDO-1.jpg",
-      enlace: "https://maps.google.com"
-    },
-    {
-      id: 2,
-      titulo: "Parque Astronómico La Punta (PALP)",
-      categoria: "Ciencia & Familia",
-      ubicacion: "Campus ULP",
-      resumen: "Un espacio único para explorar el universo con su Planetario digital, el Solar de las Miradas y el observatorio astronómico.",
-      imagen: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80",
-      enlace: "https://maps.google.com"
-    },
-    {
-      id: 3,
-      titulo: "Réplica de la Casa de Tucumán",
-      categoria: "Cultura",
-      ubicacion: "Av. Serrana",
-      resumen: "Fiel recreación del histórico sitio de la Declaración de la Independencia, ambientada con mobiliario y reliquias de la época.",
-      imagen: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
-      enlace: "https://maps.google.com"
-    }
-  ];
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     API.get('/turismo')
       .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
+        if (Array.isArray(res.data)) {
           setAtractivos(res.data);
         }
       })
-      .catch(() => {});
+      .catch(err => {
+        console.error('Error al cargar turismo:', err);
+        setAtractivos([]);
+      })
+      .finally(() => {
+        setCargando(false);
+      });
   }, []);
 
-  const listaAtractivos = atractivos.length > 0 ? atractivos : atractivosFallback;
-
-  // Helper para asegurar protocolo https://
   const resolverEnlace = (url) => {
     if (!url) return null;
     return url.startsWith('http') ? url : `https://${url}`;
   };
+
+  if (cargando) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <p className="text-xl animate-pulse font-semibold text-amber-400">
+          Cargando Puntos Turísticos...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-6 md:p-10 pt-24 sm:pt-28 md:pt-32 flex flex-col justify-between">
@@ -71,66 +55,69 @@ export default function Turismo() {
         </div>
 
         {/* Grilla de Atractivos */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-auto">
-          {listaAtractivos.map((item) => {
-            const urlDestino = resolverEnlace(item.enlace);
+        {atractivos.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <p>No hay puntos turísticos disponibles en este momento.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-auto">
+            {atractivos.map((item) => {
+              const urlDestino = resolverEnlace(item.enlace);
 
-            return (
-              <article 
-                key={item.id}
-                className="group bg-slate-900/80 rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/50 transition-all duration-300 flex flex-col justify-between shadow-xl hover:shadow-2xl hover:-translate-y-1"
-              >
-                {/* Imagen del Atractivo */}
-                <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-slate-800">
-                  <img 
-                    src={item.imagen} 
-                    alt={item.titulo} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/400x200?text=Turismo+La+Punta'; }}
-                  />
-                  <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/30">
-                    {item.categoria}
-                  </div>
-                  {(item.ubicacion || item.ubicación) && (
-                    <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md text-gray-200 text-[11px] px-2.5 py-1 rounded-md border border-white/10 flex items-center gap-1">
-                      📍 {item.ubicacion || item.ubicación}
+              return (
+                <article 
+                  key={item.id}
+                  className="group bg-slate-900/80 rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/50 transition-all duration-300 flex flex-col justify-between shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                >
+                  <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-slate-800">
+                    <img 
+                      src={item.imagen} 
+                      alt={item.titulo} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/400x200?text=Turismo+La+Punta'; }}
+                    />
+                    <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/30">
+                      {item.categoria}
                     </div>
-                  )}
-                </div>
-
-                {/* Contenido del Atractivo */}
-                <div className="p-5 flex flex-col flex-grow justify-between">
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-bold line-clamp-2 group-hover:text-amber-400 transition-colors leading-snug mb-2">
-                      {item.titulo}
-                    </h3>
-                    <p className="text-gray-300 text-xs sm:text-sm line-clamp-3 leading-relaxed">
-                      {item.resumen}
-                    </p>
+                    {item.ubicacion && (
+                      <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md text-gray-200 text-[11px] px-2.5 py-1 rounded-md border border-white/10 flex items-center gap-1">
+                        📍 {item.ubicacion}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Enlace dinámico a Horarios y Mapa */}
-                  {urlDestino ? (
-                    <a
-                      href={urlDestino}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-5 pt-3 border-t border-white/10 flex justify-between items-center text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
-                    >
-                      <span>Ver horarios y mapa</span>
-                      <span className="group-hover:translate-x-1 transition-transform">→</span>
-                    </a>
-                  ) : (
-                    <div className="mt-5 pt-3 border-t border-white/10 flex justify-between items-center text-xs font-semibold text-gray-500">
-                      <span>Información disponible en el lugar</span>
-                      <span>📍</span>
+                  <div className="p-5 flex flex-col flex-grow justify-between">
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold line-clamp-2 group-hover:text-amber-400 transition-colors leading-snug mb-2">
+                        {item.titulo}
+                      </h3>
+                      <p className="text-gray-300 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                        {item.resumen}
+                      </p>
                     </div>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </div>
+
+                    {urlDestino ? (
+                      <a
+                        href={urlDestino}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-5 pt-3 border-t border-white/10 flex justify-between items-center text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                      >
+                        <span>Ver horarios y mapa</span>
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      </a>
+                    ) : (
+                      <div className="mt-5 pt-3 border-t border-white/10 flex justify-between items-center text-xs font-semibold text-gray-500">
+                        <span>Información disponible en el lugar</span>
+                        <span>📍</span>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
 
       </div>
 
