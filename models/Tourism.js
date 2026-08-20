@@ -29,6 +29,11 @@ const Tourism = sequelize.define('Tourism', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  enlace: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    defaultValue: null,
+  },
 }, {
   tableName: 'tourisms', // Nombre de la tabla en PostgreSQL
   timestamps: true,

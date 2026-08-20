@@ -9,7 +9,8 @@ export default function GestionTurismo() {
       categoria: "Patrimonio",
       ubicacion: "Av. Serrana s/n",
       resumen: "Monumento histórico nacional a escala real que recrea el edificio de la Revolución de Mayo con muestras interactivas y visitas guiadas.",
-      imagen: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80"
+      imagen: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80",
+      enlace: "https://maps.google.com"
     },
     {
       id: 2,
@@ -17,7 +18,8 @@ export default function GestionTurismo() {
       categoria: "Ciencia & Familia",
       ubicacion: "Campus ULP",
       resumen: "Un espacio único para explorar el universo con su Planetario digital, el Solar de las Miradas y el observatorio astronómico.",
-      imagen: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80"
+      imagen: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80",
+      enlace: "https://maps.google.com"
     },
     {
       id: 3,
@@ -25,13 +27,13 @@ export default function GestionTurismo() {
       categoria: "Cultura",
       ubicacion: "Av. Serrana",
       resumen: "Fiel recreación del histórico sitio de la Declaración de la Independencia, ambientada con mobiliario y reliquias de la época.",
-      imagen: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80"
+      imagen: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+      enlace: "https://maps.google.com"
     }
   ]);
 
   const [guardando, setGuardando] = useState(false);
 
-  // Cargar datos de la BD usando el cliente API
   useEffect(() => {
     API.get('/turismo')
       .then(res => {
@@ -39,30 +41,27 @@ export default function GestionTurismo() {
           setAtractivos(res.data);
         }
       })
-      .catch(() => {
-        // Mantiene el borrador inicial si aún no se han creado registros en la BD
-      });
+      .catch(() => {});
   }, []);
 
-  // Modificar valores de las tarjetas en tiempo real
   const handleChange = (id, campo, valor) => {
     setAtractivos(prev =>
       prev.map(item => (item.id === id ? { ...item, [campo]: valor } : item))
     );
   };
 
-  // Guardar cambios
   const handleGuardar = async (id) => {
     setGuardando(true);
     const puntoAEditar = atractivos.find(item => item.id === id);
 
     try {
       await API.put(`/turismo/${id}`, puntoAEditar);
-      alert(`✅ Punto turístico "${puntoAEditar.titulo}" guardado en la Base de Datos.`);
+      alert(`✅ Punto turístico "${puntoAEditar.titulo}" guardado.`);
       
-      // Volvemos a traer los datos frescos de la BD
       const res = await API.get('/turismo');
-      setAtractivos(res.data);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setAtractivos(res.data);
+      }
     } catch (error) {
       console.error('Error al actualizar punto turístico:', error);
       alert('❌ Error al guardar en la base de datos.');
@@ -84,7 +83,7 @@ export default function GestionTurismo() {
             Gestión de Puntos Turísticos
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            Edita las tarjetas informativas de los atractivos locales que se muestran en la sección Turismo.
+            Editá las tarjetas y los enlaces a Google Maps u horarios de los atractivos locales.
           </p>
         </div>
 
@@ -120,7 +119,7 @@ export default function GestionTurismo() {
                   <label className="block text-xs font-semibold text-gray-400 mb-1">URL de la Imagen</label>
                   <input 
                     type="text" 
-                    value={item.imagen}
+                    value={item.imagen || ''}
                     onChange={(e) => handleChange(item.id, 'imagen', e.target.value)}
                     className="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400"
                   />
@@ -132,7 +131,7 @@ export default function GestionTurismo() {
                     <label className="block text-xs font-semibold text-gray-400 mb-1">Categoría</label>
                     <input 
                       type="text" 
-                      value={item.categoria}
+                      value={item.categoria || ''}
                       onChange={(e) => handleChange(item.id, 'categoria', e.target.value)}
                       className="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-amber-400 font-bold focus:outline-none focus:border-amber-400"
                     />
@@ -141,7 +140,7 @@ export default function GestionTurismo() {
                     <label className="block text-xs font-semibold text-gray-400 mb-1">Ubicación</label>
                     <input 
                       type="text" 
-                      value={item.ubicacion}
+                      value={item.ubicacion || ''}
                       onChange={(e) => handleChange(item.id, 'ubicacion', e.target.value)}
                       className="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400"
                     />
@@ -153,7 +152,7 @@ export default function GestionTurismo() {
                   <label className="block text-xs font-semibold text-gray-400 mb-1">Título / Nombre</label>
                   <textarea 
                     rows="2"
-                    value={item.titulo}
+                    value={item.titulo || ''}
                     onChange={(e) => handleChange(item.id, 'titulo', e.target.value)}
                     className="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-white font-semibold focus:outline-none focus:border-amber-400 resize-none"
                   />
@@ -164,14 +163,28 @@ export default function GestionTurismo() {
                   <label className="block text-xs font-semibold text-gray-400 mb-1">Descripción / Resumen</label>
                   <textarea 
                     rows="3"
-                    value={item.resumen}
+                    value={item.resumen || ''}
                     onChange={(e) => handleChange(item.id, 'resumen', e.target.value)}
                     className="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-gray-300 focus:outline-none focus:border-amber-400 resize-none"
                   />
                 </div>
+
+                {/* Enlace de Horarios y Mapa */}
+                <div>
+                  <label className="block text-xs font-semibold text-amber-400 mb-1">
+                    🔗 Enlace de Horarios / Google Maps
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="https://maps.app.goo.gl/... o web oficial"
+                    value={item.enlace || ''}
+                    onChange={(e) => handleChange(item.id, 'enlace', e.target.value)}
+                    className="w-full bg-slate-950 border border-amber-500/30 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
               </div>
 
-              {/* Botón de Guardar por tarjeta */}
+              {/* Botón de Guardar */}
               <button
                 onClick={() => handleGuardar(item.id)}
                 disabled={guardando}
