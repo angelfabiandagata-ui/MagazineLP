@@ -1,5 +1,4 @@
 import express from 'express';
-// Ajustá la importación según tu modelo de Sequelize o tabla
 import Tourism from '../models/Tourism.js'; 
 
 const router = express.Router();
@@ -9,7 +8,7 @@ router.get('/', async (req, res) => {
   try {
     let atractivos = await Tourism.findAll({ order: [['id', 'ASC']] });
 
-    // Si la tabla está vacía, creamos los 3 puntos iniciales
+    // Si la tabla está vacía, creamos los 3 puntos iniciales con enlace por defecto
     if (atractivos.length === 0) {
       atractivos = await Tourism.bulkCreate([
         {
@@ -18,7 +17,8 @@ router.get('/', async (req, res) => {
           categoria: "Patrimonio",
           ubicacion: "Av. Serrana s/n",
           resumen: "Monumento histórico nacional a escala real que recrea el edificio de la Revolución de Mayo.",
-          imagen: "https://agenciasanluis.com/wp-content/uploads/2018/04/CABILDO-1.jpg"
+          imagen: "https://agenciasanluis.com/wp-content/uploads/2018/04/CABILDO-1.jpg",
+          enlace: "https://maps.google.com"
         },
         {
           id: 2,
@@ -26,7 +26,8 @@ router.get('/', async (req, res) => {
           categoria: "Ciencia & Familia",
           ubicacion: "Campus ULP",
           resumen: "Un espacio único para explorar el universo con su Planetario digital y observatorio.",
-          imagen: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80"
+          imagen: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80",
+          enlace: "https://maps.google.com"
         },
         {
           id: 3,
@@ -34,7 +35,8 @@ router.get('/', async (req, res) => {
           categoria: "Cultura",
           ubicacion: "Av. Serrana",
           resumen: "Fiel recreación del histórico sitio de la Declaración de la Independencia.",
-          imagen: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80"
+          imagen: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+          enlace: "https://maps.google.com"
         }
       ]);
     }
@@ -50,7 +52,8 @@ router.get('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { titulo, categoria, ubicacion, resumen, imagen } = req.body;
+    // 👈 Desestructuramos 'enlace' del cuerpo de la petición
+    const { titulo, categoria, ubicacion, resumen, imagen, enlace } = req.body;
 
     let punto = await Tourism.findByPk(id);
 
@@ -62,17 +65,19 @@ router.put('/:id', async (req, res) => {
         categoria,
         ubicacion,
         resumen,
-        imagen
+        imagen,
+        enlace: enlace || null
       });
       return res.status(201).json({ mensaje: "Punto turístico creado con éxito", punto });
     }
 
-    // Si existe, actualiza sus campos
+    // Si existe, actualiza sus campos incluyendo enlace
     punto.titulo = titulo;
     punto.categoria = categoria;
     punto.ubicacion = ubicacion;
     punto.resumen = resumen;
     punto.imagen = imagen;
+    punto.enlace = enlace || null; // 👈 Guardamos el enlace
 
     await punto.save();
     return res.status(200).json({ mensaje: "Punto turístico actualizado con éxito", punto });
