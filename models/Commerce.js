@@ -23,7 +23,8 @@ const Commerce = sequelize.define('Commerce', {
 
   ubicacion: { type: DataTypes.STRING },
   pagina: { type: DataTypes.STRING },
-  redSocial: { type: DataTypes.JSON }
+  redSocial: { type: DataTypes.JSON },
+  activo: { type: DataTypes.BOOLEAN, defaultValue: false }
 });
 
 export default Commerce;

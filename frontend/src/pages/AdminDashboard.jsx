@@ -5,22 +5,14 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const handleCerrarSesion = () => {
-    // Se limpian las llaves de sesión guardadas en el Login
     localStorage.clear();
     navigate('/login');
   };
 
   const opciones = [
     {
-      titulo: "Alta de Comercios",
-      descripcion: "Alta decomercios adheridos a la revista.",
-      icono: "🏪",
-      link: "/registro",
-      color: "border-amber-500/30 hover:border-amber-400"
-    },
-    {
       titulo: "Gestión de Comercios",
-      descripcion: "Eliminación de comercios adheridos a la revista.",
+      descripcion: "Aprobar altas, pausar comercios y gestionar bajas o eliminaciones.",
       icono: "🏪",
       link: "/gestion-comercios",
       color: "border-amber-500/30 hover:border-amber-400"
@@ -34,7 +26,7 @@ export default function AdminDashboard() {
     },
     {
       titulo: "Gestión de Turismo",
-      descripcion: "Modificar las tarjetas informativas y fotos de los atractivos turísticos.",
+      descripcion: "Modificar las tarjetas informativas, fotos y enlaces de los atractivos locales.",
       icono: "📍",
       link: "/gestion-turismo",
       color: "border-emerald-500/30 hover:border-emerald-400"
@@ -49,13 +41,13 @@ export default function AdminDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-white/10 pb-6 mb-8 gap-4">
           <div>
             <span className="text-amber-400 font-bold uppercase tracking-wider text-xs">
-              Bienvenido Administrador
+              Panel Administrativo
             </span>
             <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wide mt-1">
               Centro de Control
             </h1>
             <p className="text-gray-400 text-xs sm:text-sm">
-              Selecciona el módulo que deseas modificar.
+              Selecciona el módulo que deseas administrar.
             </p>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import API from '../api';
 
 export default function Login() {
@@ -13,7 +13,6 @@ export default function Login() {
     setError('');
 
     try {
-      // Petición unificada al Backend (Maneja tanto comercios como admin)
       const res = await API.post('/auth/login', {
         email,
         password
@@ -21,7 +20,6 @@ export default function Login() {
 
       const { token, comercio, esAdmin } = res.data;
 
-      // Guardamos el token JWT firmado correctamente por el Backend
       localStorage.setItem('token', token);
 
       if (esAdmin) {
@@ -40,7 +38,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6 pt-20">
+    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6 pt-20 pb-12">
       <div className="w-full max-w-md bg-slate-800/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 shadow-2xl">
         <h2 className="text-3xl font-extrabold uppercase text-center mb-2 bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
           Iniciar Sesión
@@ -64,7 +62,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="usuario@ejemplo.com"
-              className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white border border-slate-700 focus:outline-none focus:border-amber-400"
+              className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white border border-slate-700 focus:outline-none focus:border-amber-400 text-sm"
             />
           </div>
 
@@ -76,17 +74,29 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white border border-slate-700 focus:outline-none focus:border-amber-400"
+              className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white border border-slate-700 focus:outline-none focus:border-amber-400 text-sm"
             />
           </div>
 
           <button
             type="submit"
-            className="mt-4 w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-bold text-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
+            className="mt-4 w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-bold text-slate-950 uppercase tracking-wider rounded-xl transition-all shadow-lg cursor-pointer text-sm"
           >
             Ingresar
           </button>
         </form>
+
+        {/* Acceso a Registro para nuevos comerciantes */}
+        <div className="mt-8 pt-6 border-t border-slate-700/60 text-center">
+          <p className="text-xs text-gray-400 mb-2">¿Querés que tu negocio aparezca en la revista?</p>
+          <Link
+            to="/registro"
+            className="inline-block text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            ✨ Sumá tu Comercio acá
+          </Link>
+        </div>
+
       </div>
     </div>
   );

@@ -14,10 +14,61 @@ const uploadFields = upload.fields([
   { name: 'promo2', maxCount: 1 }
 ]);
 
-// GET /api/comercios (Público)
+// 1. GET /api/comercios/admin/todos (Protegido - Devuelve TODOS los comercios para el Admin)
+router.get('/admin/todos', verificarToken, async (req, res) => {
+  try {
+    if (!req.usuario.esAdmin) {
+      return res.status(403).json({ mensaje: 'Acceso denegado: solo administradores.' });
+    }
+
+    const comercios = await Commerce.findAll({
+      include: [
+        { model: Label, through: { attributes: [] } },
+        { model: Image, as: 'images' }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.status(200).json(comercios);
+  } catch (error) {
+    console.error('Error al obtener todos los comercios (admin):', error);
+    return res.status(500).json({ mensaje: 'Error al consultar la base de datos.' });
+  }
+});
+
+// 2. PUT /api/comercios/:id/estado (Protegido - Dar de Alta / Dar de Baja sin eliminar)
+router.put('/:id/estado', verificarToken, async (req, res) => {
+  try {
+    if (!req.usuario.esAdmin) {
+      return res.status(403).json({ mensaje: 'Acceso denegado: solo administradores.' });
+    }
+
+    const { id } = req.params;
+    const { activo } = req.body;
+
+    const comercio = await Commerce.findByPk(id);
+    if (!comercio) {
+      return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
+    }
+
+    comercio.activo = Boolean(activo);
+    await comercio.save();
+
+    return res.status(200).json({ 
+      mensaje: `Comercio ${comercio.activo ? 'activado (dado de alta)' : 'pausado (dado de baja)'} con éxito.`,
+      comercio 
+    });
+  } catch (error) {
+    console.error('Error al cambiar estado del comercio:', error);
+    return res.status(500).json({ mensaje: 'Error al actualizar el estado.' });
+  }
+});
+
+// 3. GET /api/comercios (Público - Solo comercios ACTIVOS en la revista)
 router.get('/', async (req, res) => {
   try {
     const comercios = await Commerce.findAll({
+      where: { activo: true }, // 👈 Solo muestra comercios con el alta confirmada
       include: [
         { model: Label, through: { attributes: [] } },
         { model: Image, as: 'images' }
@@ -31,7 +82,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/comercios/:id (Público)
+// 4. GET /api/comercios/:id (Público)
 router.get('/:id', async (req, res) => {
   try {
     const comercio = await Commerce.findByPk(req.params.id, {
@@ -48,7 +99,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/comercios/:id (Protegido)
+// 5. PUT /api/comercios/:id (Protegido - Edición de datos e imágenes)
 router.put('/:id', verificarToken, (req, res, next) => {
   uploadFields(req, res, (err) => {
     if (err) return res.status(400).json({ mensaje: 'Error en la subida de archivos.' });
@@ -63,7 +114,6 @@ router.put('/:id', verificarToken, (req, res, next) => {
       return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
     }
 
-    // --- AUTORIZACIÓN DIRECTA ---
     const esPropietario = String(comercio.id) === String(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
@@ -79,7 +129,6 @@ router.put('/:id', verificarToken, (req, res, next) => {
     comercio.tel = tel !== undefined ? tel : comercio.tel;
     comercio.rubro = rubro !== undefined ? rubro : comercio.rubro;
     
-    // Guardamos la nueva propiedad 'ubicacion' en el JSON redSocial
     comercio.redSocial = { 
       instagram, 
       whatsapp, 
@@ -144,7 +193,7 @@ router.put('/:id', verificarToken, (req, res, next) => {
   }
 });
 
-// DELETE /api/comercios/:id/imagen/:tipo (Protegido - Borra de DB y Cloudinary)
+// 6. DELETE /api/comercios/:id/imagen/:tipo (Protegido - Borra de DB y Cloudinary)
 router.delete('/:id/imagen/:tipo', verificarToken, async (req, res) => {
   try {
     const { id, tipo } = req.params;
@@ -152,7 +201,6 @@ router.delete('/:id/imagen/:tipo', verificarToken, async (req, res) => {
 
     if (!comercio) return res.status(404).json({ mensaje: 'Comercio no encontrado.' });
 
-    // Autorización
     const esPropietario = String(comercio.id) === String(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 
@@ -165,7 +213,6 @@ router.delete('/:id/imagen/:tipo', verificarToken, async (req, res) => {
     });
 
     if (imagen) {
-      // Intentar borrar el archivo en Cloudinary si es una URL de Cloudinary
       if (imagen.url && imagen.url.includes('cloudinary.com')) {
         try {
           const parts = imagen.url.split('/');
@@ -189,7 +236,7 @@ router.delete('/:id/imagen/:tipo', verificarToken, async (req, res) => {
   }
 });
 
-// DELETE /api/comercios/:id (Protegido)
+// 7. DELETE /api/comercios/:id (Protegido - Elimina definitivamente)
 router.delete('/:id', verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -197,7 +244,6 @@ router.delete('/:id', verificarToken, async (req, res) => {
 
     if (!comercio) return res.status(404).json({ mensaje: 'El comercio no existe.' });
 
-    // --- AUTORIZACIÓN DIRECTA ---
     const esPropietario = String(comercio.id) === String(req.usuario.id);
     const esAdmin = Boolean(req.usuario.esAdmin);
 

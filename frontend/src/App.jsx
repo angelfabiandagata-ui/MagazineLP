@@ -11,6 +11,7 @@ import Busqueda from './pages/Busqueda';
 import Turismo from './pages/Turismo';
 import Contacto from './pages/Contacto';
 import Login from './pages/Login';
+import Registro from './pages/Registro';
 import Terminos from './pages/Terminos';
 import Privacidad from './pages/Privacidad';
 import PreguntasFrecuentes from './pages/PreguntasFrecuentes';
@@ -18,7 +19,6 @@ import PreguntasFrecuentes from './pages/PreguntasFrecuentes';
 // Páginas Privadas (Comercio / Admin)
 import Perfil from './pages/Perfil';
 import AdminDashboard from './pages/AdminDashboard';
-import Registro from './pages/Registro';
 import GestionComercios from './pages/GestionComercios';
 import GestionNoticias from './pages/GestionNoticias';
 import GestionTurismo from './pages/GestionTurismo';
@@ -37,6 +37,7 @@ export default function App() {
             <Route path="/turismo" element={<Turismo />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Registro />} />
             <Route path="/terminos" element={<Terminos />} />
             <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/preguntas-frecuentes" element={<PreguntasFrecuentes />} />
@@ -55,14 +56,6 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/registro" 
-              element={
-                <ProtectedRoute>
-                  <Registro />
                 </ProtectedRoute>
               } 
             />
